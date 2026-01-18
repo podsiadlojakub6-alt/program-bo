@@ -1,40 +1,158 @@
-{% elif results.type == 'game' %}
-    <h3 class="text-emerald-400 font-bold mb-4 text-sm uppercase tracking-widest">Analiza Teorii Gier</h3>
-    <div class="space-y-6">
-        {% if results.data.saddle %}
-            <div class="p-6 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl">
-                <p class="text-emerald-400 font-black text-xs uppercase mb-2">Gra Stabilna (Punkt Siodłowy)</p>
-                <p class="text-4xl font-black italic">V = {{results.data.saddle.v}}</p>
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm italic text-slate-300">
-                    <p class="bg-black/20 p-3 rounded-lg border-l-4 border-emerald-500">Gracz A: "Wybieram W{{results.data.saddle.r}}, bo to gwarantuje mi zysk {{results.data.saddle.v}}."</p>
-                    <p class="bg-black/20 p-3 rounded-lg border-l-4 border-rose-500">Gracz B: "Muszę wybrać K{{results.data.saddle.c}}, aby moja strata nie przekroczyła {{results.data.saddle.v}}."</p>
-                </div>
-            </div>
-        {% elif results.data.mixed %}
-            <div class="p-6 bg-blue-500/10 border-2 border-blue-500/30 rounded-2xl">
-                <p class="text-blue-400 font-black text-xs uppercase mb-4">Strategie Mieszane (2x2)</p>
-                <div class="flex items-center justify-center mb-6">
-                    <div class="text-center">
-                        <p class="text-[10px] text-slate-500 uppercase font-bold">Wartość oczekiwana gry</p>
-                        <p class="text-5xl font-black text-blue-400">V = {{results.data.mixed.v}}</p>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>BO Master - System Ekspercki</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .input-cell { width: 70px; text-align: center; border: 1px solid #cbd5e1; padding: 4px; border-radius: 6px; font-weight: 600; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #1e40af; background: #f1f5f9; }
+        .result-card { background: #1e293b; border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #334155; height: 100%; transition: transform 0.2s; }
+        .result-card:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-2 md:p-6">
+    <div class="max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200">
+        <div class="flex bg-slate-100 border-b text-[10px] font-black uppercase tracking-tighter sm:tracking-widest text-slate-500">
+            <button onclick="setM('nature')" id="b-nature" class="flex-1 py-5 hover:bg-white transition border-r">Gry z Naturą</button>
+            <button onclick="setM('game')" id="b-game" class="flex-1 py-5 hover:bg-white transition border-r">Gry Strategiczne</button>
+            <button onclick="setM('transport')" id="b-transport" class="flex-1 py-5 hover:bg-white transition border-r">Transport</button>
+            <button onclick="setM('simplex')" id="b-simplex" class="flex-1 py-5 hover:bg-white transition">Simplex</button>
+        </div>
+
+        <div class="p-4 md:p-8">
+            <form method="POST">
+                <input type="hidden" name="mode" id="m" value="{{ mode }}">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="t" class="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Macierz Danych</h2>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="aR()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 shadow-lg shadow-blue-200">+ Wiersz</button>
+                        <button type="button" onclick="aC()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200">+ Kolumna</button>
                     </div>
                 </div>
-                <div class="space-y-4">
-                    <div class="bg-slate-800 p-4 rounded-xl border-l-8 border-blue-500">
-                        <p class="text-blue-300 font-bold text-xs uppercase mb-2">Tok myślenia Gracza A (Zyski):</p>
-                        <p class="text-sm">"Wybieram strategię **W1 w {{results.data.mixed.p1_pct}}%** oraz **W2 w {{results.data.mixed.p2_pct}}%** czasu. Mój przewidywany średni zysk wyniesie **{{results.data.mixed.v}}**."</p>
-                    </div>
-                    <div class="bg-slate-800 p-4 rounded-xl border-l-8 border-rose-500">
-                        <p class="text-rose-300 font-bold text-xs uppercase mb-2">Tok myślenia Gracza B (Straty):</p>
-                        <p class="text-sm">"Wybieram strategię **K1 w {{results.data.mixed.q1_pct}}%** oraz **K2 w {{results.data.mixed.q2_pct}}%** czasu. Dzięki temu moja średnia strata nie będzie większa niż **{{results.data.mixed.v}}**."</p>
-                    </div>
+
+                <div class="overflow-x-auto mb-8 bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
+                    <table id="mt" class="w-full">
+                        <thead id="th" class="text-[10px] font-bold uppercase text-slate-400">
+                            <tr id="dr"><th></th><th class="p-1"><button type="button" onclick="rC(1)" class="text-rose-400 hover:text-rose-600">usuń</button></th><th class="p-1"><button type="button" onclick="rC(2)" class="text-rose-400 hover:text-rose-600">usuń</button></th><th></th></tr>
+                            <tr id="hr"><th></th><th class="p-3">K1</th><th class="p-3">K2</th><th></th></tr>
+                        </thead>
+                        <tbody id="tb" class="divide-y divide-slate-200">
+                            <tr><td class="p-4 font-black text-xs text-slate-400">W1</td><td><input name="cell_0_0" class="input-cell" value="0"></td><td><input name="cell_0_1" class="input-cell" value="0"></td><td class="text-center"><button type="button" onclick="rR(this)" class="text-slate-300 hover:text-rose-500 font-bold">×</button></td></tr>
+                            <tr><td class="p-4 font-black text-xs text-slate-400">W2</td><td><input name="cell_1_0" class="input-cell" value="0"></td><td><input name="cell_1_1" class="input-cell" value="0"></td><td class="text-center"><button type="button" onclick="rR(this)" class="text-slate-300 hover:text-rose-500 font-bold">×</button></td></tr>
+                        </tbody>
+                    </table>
                 </div>
+
+                <div id="opts" class="mb-8 p-6 bg-blue-50 rounded-2xl flex items-center gap-6 border border-blue-100 hidden">
+                    <span class="text-xs font-black text-blue-700 uppercase">Parametr Hurwicza (α):</span>
+                    <input type="number" step="0.1" name="gamma" value="0.6" class="w-24 p-2 border-2 border-blue-200 rounded-xl text-center font-black text-blue-600">
+                </div>
+
+                <button type="submit" class="w-full bg-slate-900 text-white font-black py-5 rounded-[1.5rem] shadow-xl hover:bg-black transition-all transform active:scale-[0.97] uppercase tracking-widest">Generuj Odpowiedź</button>
+            </form>
+
+            {% if results %}
+            <div class="mt-12 space-y-6">
+                {% if results.type == 'nature' %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="result-card"><p class="text-[10px] text-blue-400 font-bold uppercase mb-2">Wald (Maximin)</p><p class="text-2xl font-black text-white">Wariant {{results.wald}}</p></div>
+                        <div class="result-card"><p class="text-[10px] text-emerald-400 font-bold uppercase mb-2">Hurwicz</p><p class="text-2xl font-black text-white">Wariant {{results.hur}}</p></div>
+                        <div class="result-card"><p class="text-[10px] text-purple-400 font-bold uppercase mb-2">Bayes (Średnia)</p><p class="text-2xl font-black text-white">Wariant {{results.bayes}}</p></div>
+                        <div class="result-card"><p class="text-[10px] text-rose-400 font-bold uppercase mb-2">Savage (Strata)</p><p class="text-2xl font-black text-white">Wariant {{results.sav}}</p></div>
+                    </div>
+
+                {% elif results.type == 'game' %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="result-card"><p class="text-[10px] text-slate-400 uppercase font-bold mb-4 italic">Analiza Gracza A (Wiersze)</p>
+                            {% if results.data.saddle %} <p class="text-lg font-bold text-white">Wybiera W{{results.data.saddle.r}}</p><p class="text-sm text-blue-400 mt-2">Gwarantowany zysk: {{results.data.maximin}}</p>
+                            {% elif results.data.mixed %}<p class="text-sm text-white leading-relaxed">"Stosuję strategię mieszaną: **W1 w {{results.data.mixed.p1_pct}}%** oraz **W2 w {{results.data.mixed.p2_pct}}%**. Mój średni zysk wyniesie {{results.data.mixed.v}}."</p>
+                            {% endif %}
+                        </div>
+                        <div class="result-card"><p class="text-[10px] text-slate-400 uppercase font-bold mb-4 italic">Analiza Gracza B (Kolumny)</p>
+                            {% if results.data.saddle %} <p class="text-lg font-bold text-white">Wybiera K{{results.data.saddle.c}}</p><p class="text-sm text-rose-400 mt-2">Ograniczona strata: {{results.data.minimax}}</p>
+                            {% elif results.data.mixed %}<p class="text-sm text-white leading-relaxed">"Kontruję strategią: **K1 w {{results.data.mixed.q1_pct}}%** oraz **K2 w {{results.data.mixed.q2_pct}}%**. Moja średnia strata nie przekroczy {{results.data.mixed.v}}."</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                {% elif results.type == 'trans' %}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="result-card md:col-span-1 flex flex-col justify-center text-center"><p class="text-[10px] text-emerald-400 uppercase font-bold mb-2">Koszt Całkowity</p><p class="text-4xl font-black text-white">{{results.data.cost}}</p></div>
+                        <div class="result-card md:col-span-2"><p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Macierz Przewozów</p><pre class="text-xs text-blue-300 font-mono">{{results.data.alloc}}</pre></div>
+                    </div>
+
+                {% elif results.type == 'simplex' %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="result-card"><p class="text-[10px] text-blue-400 uppercase font-bold mb-2">Optimum Funkcji Celu (Z)</p><p class="text-4xl font-black text-white">{{results.data.obj}}</p></div>
+                        <div class="result-card"><p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Wartości Zmiennych</p>
+                            <div class="flex flex-wrap gap-2 mt-2">{% for v in results.data.x %}<span class="bg-white/10 px-3 py-1 rounded text-white text-xs">X{{loop.index}} = {{v}}</span>{% endfor %}</div>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
-        {% else %}
-            <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300">
-                <p class="font-bold">Brak punktu siodłowego</p>
-                <p class="text-xs">Macierz jest większa niż 2x2. Użyj metody graficznej lub Simplex, aby wyznaczyć strategie mieszane.</p>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
-{% endif %}
+
+    <script>
+        function setM(m) {
+            document.getElementById('m').value = m;
+            document.getElementById('t').innerText = m === 'nature' ? 'Gry z Naturą' : (m === 'game' ? 'Gry Strategicze' : m.toUpperCase());
+            document.getElementById('opts').style.display = (m === 'nature') ? 'flex' : 'none';
+            document.querySelectorAll('.flex > button').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById('b-' + m).classList.add('tab-active');
+            uN();
+        }
+        setM('{{mode}}' || 'nature');
+
+        function uN() {
+            const m = document.getElementById('m').value;
+            const rows = document.querySelectorAll('#tb tr');
+            rows.forEach((r, i) => {
+                let lbl = (m==='game'?'G1:W':'W') + (i+1);
+                if (m === 'transport' && i === rows.length - 1) lbl = 'POPYT';
+                if (m === 'simplex' && i === rows.length - 1) lbl = 'F.CELU';
+                r.cells[0].innerText = lbl;
+                r.querySelectorAll('input').forEach((n, j) => n.name = `cell_${i}_${j}`);
+            });
+            const heads = document.querySelectorAll('#hr th');
+            for (let i = 1; i < heads.length - 1; i++) {
+                let lbl = (m==='game'?'G2:K':'K') + i;
+                if (m === 'transport' && i === heads.length - 2) lbl = 'PODAŻ';
+                if (m === 'simplex' && i === heads.length - 2) lbl = 'LIMIT';
+                heads[i].innerText = lbl;
+            }
+        }
+        function aR() {
+            const b = document.getElementById('tb'), c = document.getElementById('hr').cells.length - 2, r = document.createElement('tr');
+            let s = `<td class="p-3 font-bold text-xs text-slate-400"></td>`;
+            for (let i = 0; i < c; i++) s += `<td><input class="input-cell" value="0"></td>`;
+            s += `<td class="text-center"><button type="button" onclick="rR(this)" class="text-slate-300 hover:text-rose-500 font-bold">×</button></td>`;
+            r.innerHTML = s; b.appendChild(r); uN();
+        }
+        function aC() {
+            const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
+            const nI = hr.cells.length - 1;
+            const thD = document.createElement('th'); thD.className = "p-1"; thD.innerHTML = `<button type="button" onclick="rC(${nI})" class="text-rose-400">usuń</button>`;
+            dr.insertBefore(thD, dr.lastElementChild);
+            const thH = document.createElement('th'); thH.className = "p-2";
+            hr.insertBefore(thH, hr.lastElementChild);
+            rows.forEach(r => {
+                const td = document.createElement('td'); td.innerHTML = `<input class="input-cell" value="0">`;
+                r.insertBefore(td, r.lastElementChild);
+            });
+            uN();
+        }
+        function rR(b) { if (document.querySelectorAll('#tb tr').length > 1) { b.closest('tr').remove(); uN(); } }
+        function rC(i) {
+            const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
+            if (hr.cells.length > 3) {
+                dr.deleteCell(i); hr.deleteCell(i); rows.forEach(r => r.deleteCell(i));
+                dr.querySelectorAll('button').forEach((b, idx) => b.setAttribute('onclick', `rC(${idx + 1})`));
+                uN();
+            }
+        }
+    </script>
+</body>
+</html>
