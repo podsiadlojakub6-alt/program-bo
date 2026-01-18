@@ -2,37 +2,84 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Kalkulator Decyzji</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Decyzji BO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        textarea { width: 100%; height: 100px; }
-        .result { background: #f4f4f4; padding: 15px; border-radius: 8px; margin-top: 20px; }
-        .win { color: green; font-weight: bold; }
+        .input-cell { width: 80px; text-align: center; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px; }
+        .input-cell:focus { outline: 2px solid #3b82f6; border-color: transparent; }
     </style>
 </head>
-<body>
-    <h1>Kalkulator Kryteriów Decyzyjnych</h1>
-    <form method="post">
-        <p>Wpisz macierz (wiersz = wariant, liczby oddzielone spacjami):</p>
-        <textarea name="matrix" placeholder="85 75 95&#10;85 90 75.5&#10;85 65 98"></textarea>
-        <br><br>
-        Współczynnik Gamma (Hurwicz): <input type="text" name="gamma" value="0.6">
-        <br><br>
-        <button type="submit">Oblicz wyniki</button>
-    </form>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Kalkulator Decyzji</h1>
+        <p class="text-gray-600 mb-8">Wprowadź dane do tabeli, aby wyznaczyć optymalny wariant według kryteriów BO.</p>
 
-    {% if results %}
-        <div class="result">
-            {% if results.error %}
-                <p style="color: red;">Błąd: {{ results.error }}</p>
-            {% else %}
-                <h3>Wyniki:</h3>
-                <p><b>Wald:</b> Wybierz wariant <span class="win">{{ results.wald.idx }}</span> (wartość: {{ results.wald.val }})</p>
-                <p><b>Hurwicz:</b> Wybierz wariant <span class="win">{{ results.hurwicz.idx }}</span> (wartość: {{ results.hurwicz.val }})</p>
-                <p><b>Bayes (A):</b> Wybierz wariant <span class="win">{{ results.bayes.idx }}</span> (wartość: {{ results.bayes.val }})</p>
-                <p><b>Savage:</b> Wybierz wariant <span class="win">{{ results.savage.idx }}</span> (min. strata: {{ results.savage.val }})</p>
-            {% endif %}
+        <form method="POST" id="decisionForm">
+            <div class="mb-6 overflow-x-auto">
+                <table id="matrixTable" class="w-full text-left border-collapse">
+                    <thead>
+                        <tr id="headerRow">
+                            <th class="p-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Warianty</th>
+                            <th class="p-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Stan A</th>
+                            <th class="p-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Stan B</th>
+                            <th class="p-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Stan C</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td class="p-2 font-medium">I</td>
+                            <td><input type="text" name="cell_0_0" class="input-cell" value="85.0"></td>
+                            <td><input type="text" name="cell_0_1" class="input-cell" value="75.0"></td>
+                            <td><input type="text" name="cell_0_2" class="input-cell" value="95.0"></td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 font-medium">II</td>
+                            <td><input type="text" name="cell_1_0" class="input-cell" value="85.0"></td>
+                            <td><input type="text" name="cell_1_1" class="input-cell" value="90.0"></td>
+                            <td><input type="text" name="cell_1_2" class="input-cell" value="75.5"></td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 font-medium">III</td>
+                            <td><input type="text" name="cell_2_0" class="input-cell" value="85.0"></td>
+                            <td><input type="text" name="cell_2_1" class="input-cell" value="65.0"></td>
+                            <td><input type="text" name="cell_2_2" class="input-cell" value="98.0"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mb-8 items-center bg-gray-100 p-4 rounded-lg">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Współczynnik Gamma (Hurwicz)</label>
+                    <input type="number" step="0.1" name="gamma" value="0.6" min="0" max="1" class="mt-1 p-2 border rounded w-24">
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200">
+                    OBLICZ WYNIKI
+                </button>
+            </div>
+        </form>
+
+        {% if results %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div class="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                <span class="text-blue-600 font-semibold uppercase text-xs">Kryterium Walda</span>
+                <p class="text-xl font-bold">Wariant {{ results.wald.idx }} <span class="text-gray-500 font-normal">({{ results.wald.val }})</span></p>
+            </div>
+            <div class="p-4 border rounded-lg bg-green-50 border-green-200">
+                <span class="text-green-600 font-semibold uppercase text-xs">Kryterium Hurwicza</span>
+                <p class="text-xl font-bold">Wariant {{ results.hurwicz.idx }} <span class="text-gray-500 font-normal">({{ results.hurwicz.val }})</span></p>
+            </div>
+            <div class="p-4 border rounded-lg bg-purple-50 border-purple-200">
+                <span class="text-purple-600 font-semibold uppercase text-xs">Kryterium Bayesa (A)</span>
+                <p class="text-xl font-bold">Wariant {{ results.bayes.idx }} <span class="text-gray-500 font-normal">({{ results.bayes.val }})</span></p>
+            </div>
+            <div class="p-4 border rounded-lg bg-red-50 border-red-200">
+                <span class="text-red-600 font-semibold uppercase text-xs">Kryterium Savage'a</span>
+                <p class="text-xl font-bold">Wariant {{ results.savage.idx }} <span class="text-gray-500 font-normal">(Strata: {{ results.savage.val }})</span></p>
+            </div>
         </div>
-    {% endif %}
+        {% endif %}
+    </div>
 </body>
 </html>
