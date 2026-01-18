@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Kalkulator Decyzji</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        textarea { width: 100%; height: 100px; }
+        .result { background: #f4f4f4; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .win { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Kalkulator Kryteriów Decyzyjnych</h1>
+    <form method="post">
+        <p>Wpisz macierz (wiersz = wariant, liczby oddzielone spacjami):</p>
+        <textarea name="matrix" placeholder="85 75 95&#10;85 90 75.5&#10;85 65 98"></textarea>
+        <br><br>
+        Współczynnik Gamma (Hurwicz): <input type="text" name="gamma" value="0.6">
+        <br><br>
+        <button type="submit">Oblicz wyniki</button>
+    </form>
+
+    {% if results %}
+        <div class="result">
+            {% if results.error %}
+                <p style="color: red;">Błąd: {{ results.error }}</p>
+            {% else %}
+                <h3>Wyniki:</h3>
+                <p><b>Wald:</b> Wybierz wariant <span class="win">{{ results.wald.idx }}</span> (wartość: {{ results.wald.val }})</p>
+                <p><b>Hurwicz:</b> Wybierz wariant <span class="win">{{ results.hurwicz.idx }}</span> (wartość: {{ results.hurwicz.val }})</p>
+                <p><b>Bayes (A):</b> Wybierz wariant <span class="win">{{ results.bayes.idx }}</span> (wartość: {{ results.bayes.val }})</p>
+                <p><b>Savage:</b> Wybierz wariant <span class="win">{{ results.savage.idx }}</span> (min. strata: {{ results.savage.val }})</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</body>
+</html>
