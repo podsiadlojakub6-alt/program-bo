@@ -6,7 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .input-cell { width: 75px; text-align: center; border: 1px solid #cbd5e1; padding: 4px; border-radius: 6px; font-weight: bold; }
-        .tab-active { border-bottom: 4px solid #2563eb; color: #1e40af; background: #f8fafc; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #1e40af; background: #f1f5f9; }
         .panel-nature { background: #0f172a; border-top: 6px solid #3b82f6; }
         .panel-game { background: #1e293b; border-top: 6px solid #10b981; }
     </style>
@@ -26,7 +26,7 @@
                 <div class="flex justify-between items-end mb-8">
                     <div>
                         <h2 id="t" class="text-3xl font-black text-slate-800 tracking-tighter uppercase italic">Macierz</h2>
-                        <div id="gameValues" class="mt-2 hidden flex gap-4 text-xs font-bold">
+                        <div id="gameIndicator" class="mt-2 hidden flex gap-4 text-xs font-bold">
                             {% if results and results.type == 'game' %}
                             <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded">Va = {{results.data.va}}</span>
                             <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded">Vb = {{results.data.vb}}</span>
@@ -34,20 +34,20 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button type="button" onclick="addRow()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">+ Wiersz</button>
-                        <button type="button" onclick="addColumn()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">+ Kolumna</button>
+                        <button type="button" onclick="addRow()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">+ Wiersz (A)</button>
+                        <button type="button" onclick="addColumn()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">+ Kolumna (B)</button>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto mb-10 bg-slate-50 p-6 rounded-[2rem] border border-slate-200">
                     <table id="mt" class="w-full text-center">
-                        <thead id="th" class="text-[10px] font-bold uppercase text-slate-400">
+                        <thead id="th" class="text-[10px] font-bold uppercase text-slate-400 tracking-widest">
                             <tr id="dr"><th></th><th class="p-1"><button type="button" onclick="removeCol(1)" class="text-rose-500">usuń</button></th><th class="p-1"><button type="button" onclick="removeCol(2)" class="text-rose-500">usuń</button></th><th></th></tr>
-                            <tr id="hr"><th></th><th>B1</th><th>B2</th><th></th></tr>
+                            <tr id="hr"><th></th><th class="p-3">B1</th><th class="p-3">B2</th><th></th></tr>
                         </thead>
                         <tbody id="tb" class="divide-y divide-slate-200">
-                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left uppercase">A1</td><td><input name="cell_0_0" class="input-cell" value="0"></td><td><input name="cell_0_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
-                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left uppercase">A2</td><td><input name="cell_1_0" class="input-cell" value="0"></td><td><input name="cell_1_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
+                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">A1</td><td><input name="cell_0_0" class="input-cell" value="0"></td><td><input name="cell_0_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
+                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">A2</td><td><input name="cell_1_0" class="input-cell" value="0"></td><td><input name="cell_1_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -60,29 +60,29 @@
                 <button type="submit" class="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] shadow-xl hover:bg-blue-700 transition uppercase tracking-widest">Oblicz</button>
             </form>
 
-            <div id="resultsContainer">
+            <div id="resultsView">
                 {% if results %}
                     {% if results.type == 'nature' %}
-                    <div id="natureResults" class="mt-12 panel-nature rounded-[2.5rem] p-12 shadow-2xl text-white">
+                    <div id="natureRes" class="mt-12 panel-nature rounded-[2.5rem] p-12 shadow-2xl text-white">
                         <h3 class="text-blue-400 font-bold mb-8 uppercase tracking-widest text-xs">Wyniki: Gry z Naturą</h3>
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-10">
-                            <div><p class="text-[10px] text-slate-500 font-bold mb-2 uppercase">Wald</p><p class="text-3xl font-black">A{{results.wald}}</p></div>
-                            <div><p class="text-[10px] text-slate-500 font-bold mb-2 uppercase">Hurwicz</p><p class="text-3xl font-black">A{{results.hur}}</p></div>
-                            <div><p class="text-[10px] text-slate-500 font-bold mb-2 uppercase">Bayes</p><p class="text-3xl font-black">A{{results.bayes}}</p></div>
-                            <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Savage</p><p class="text-3xl font-black">A{{results.sav}}</p></div>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-10 text-center">
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Wald</p><p class="text-2xl font-black italic">A{{results.wald}}</p></div>
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Hurwicz</p><p class="text-2xl font-black italic">A{{results.hur}}</p></div>
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Bayes</p><p class="text-2xl font-black italic">A{{results.bayes}}</p></div>
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Savage</p><p class="text-2xl font-black italic">A{{results.sav}}</p></div>
                         </div>
                     </div>
                     {% elif results.type == 'game' %}
-                    <div id="gameResults" class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="gameRes" class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="panel-game rounded-[2.5rem] p-10 shadow-2xl text-white border-l-8 border-blue-500">
-                            <p class="text-blue-400 font-black text-[10px] mb-4 uppercase italic">Gracz A</p>
-                            {% if results.data.saddle %}<p class="text-xl italic">Wybieram A{{results.data.saddle.r}}</p><p class="text-sm text-slate-400">Zysk: {{results.data.va}}</p>
-                            {% elif results.data.mixed %}<p class="text-sm italic">"Gram A1 w {{results.data.mixed.p1_pct}}% i A2 w {{results.data.mixed.p2_pct}}%."</p><p class="text-xs mt-2 font-bold text-blue-400">V = {{results.data.mixed.v}}</p>{% endif %}
+                            <p class="text-blue-400 font-black text-[10px] mb-4 uppercase italic tracking-widest">Gracz A</p>
+                            {% if results.data.saddle %}<p class="text-xl">Strategia: A{{results.data.saddle.r}}</p><p class="text-sm text-slate-400">Zysk: {{results.data.va}}</p>
+                            {% elif results.data.mixed %}<p class="text-sm italic">"Gram A1 w {{results.data.mixed.p1_pct}}% i A2 w {{results.data.mixed.p2_pct}}%."</p><p class="text-xs mt-2 font-bold text-blue-400 uppercase">Średni zysk V = {{results.data.mixed.v}}</p>{% endif %}
                         </div>
                         <div class="panel-game rounded-[2.5rem] p-10 shadow-2xl text-white border-l-8 border-rose-500">
-                            <p class="text-rose-400 font-black text-[10px] mb-4 uppercase italic">Gracz B</p>
-                            {% if results.data.saddle %}<p class="text-xl italic">Wybieram B{{results.data.saddle.c}}</p><p class="text-sm text-slate-400">Strata: {{results.data.vb}}</p>
-                            {% elif results.data.mixed %}<p class="text-sm italic">"Gram B1 w {{results.data.mixed.q1_pct}}% i B2 w {{results.data.mixed.q2_pct}}%."</p><p class="text-xs mt-2 font-bold text-rose-400">V = {{results.data.mixed.v}}</p>{% endif %}
+                            <p class="text-rose-400 font-black text-[10px] mb-4 uppercase italic tracking-widest">Gracz B</p>
+                            {% if results.data.saddle %}<p class="text-xl">Strategia: B{{results.data.saddle.c}}</p><p class="text-sm text-slate-400">Strata: {{results.data.vb}}</p>
+                            {% elif results.data.mixed %}<p class="text-sm italic">"Gram B1 w {{results.data.mixed.q1_pct}}% i B2 w {{results.data.mixed.q2_pct}}%."</p><p class="text-xs mt-2 font-bold text-rose-400 uppercase">Średnia strata V = {{results.data.mixed.v}}</p>{% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -96,20 +96,22 @@
             document.getElementById('m').value = mode;
             document.getElementById('t').innerText = mode === 'nature' ? 'Gry z Naturą' : 'Gry Strategiczne';
             document.getElementById('opts').style.display = (mode === 'nature') ? 'flex' : 'none';
-            document.getElementById('gameValues').style.display = (mode === 'game') ? 'flex' : 'none';
+            document.getElementById('gameIndicator').style.display = (mode === 'game') ? 'flex' : 'none';
+            
             document.querySelectorAll('.flex > button').forEach(b => b.classList.remove('tab-active'));
             document.getElementById('b-' + mode).classList.add('tab-active');
             
-            const natureBox = document.getElementById('natureResults');
-            const gameBox = document.getElementById('gameResults');
-            if(natureBox) natureBox.style.display = 'none';
-            if(gameBox) gameBox.style.display = 'none';
+            // Czyszczenie starego panelu wyników przy przełączaniu
+            const nBox = document.getElementById('natureRes');
+            const gBox = document.getElementById('gameRes');
+            if(nBox) nBox.style.display = 'none';
+            if(gBox) gBox.style.display = 'none';
             
-            updateNames();
+            updateLabels();
         }
         setMode('{{mode}}' || 'nature');
 
-        function updateNames() {
+        function updateLabels() {
             const rows = document.querySelectorAll('#tb tr');
             rows.forEach((r, i) => {
                 r.cells[0].innerText = 'A' + (i + 1);
@@ -122,31 +124,31 @@
         }
         function addRow() {
             const b = document.getElementById('tb'), c = document.getElementById('hr').cells.length - 2, r = document.createElement('tr');
-            let s = `<td class="p-4 font-black text-xs text-slate-400 text-left uppercase"></td>`;
+            let s = `<td class="p-4 font-black text-xs text-slate-400 text-left"></td>`;
             for (let i = 0; i < c; i++) s += `<td><input class="input-cell" value="0"></td>`;
             s += `<td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td>`;
-            r.innerHTML = s; b.appendChild(r); updateNames();
+            r.innerHTML = s; b.appendChild(r); updateLabels();
         }
         function addColumn() {
             const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
             const nI = hr.cells.length - 1;
-            const thD = document.createElement('th'); thD.className = "p-1"; thD.innerHTML = `<button type="button" onclick="removeCol(${nI})" class="text-rose-500 font-bold uppercase text-[9px]">usuń</button>`;
+            const thD = document.createElement('th'); thD.className = "p-1"; thD.innerHTML = `<button type="button" onclick="removeCol(${nI})" class="text-rose-500 uppercase text-[9px] font-bold">usuń</button>`;
             dr.insertBefore(thD, dr.lastElementChild);
-            const thH = document.createElement('th'); thH.className = "p-2";
+            const thH = document.createElement('th'); thH.className = "p-3";
             hr.insertBefore(thH, hr.lastElementChild);
             rows.forEach(r => {
                 const td = document.createElement('td'); td.innerHTML = `<input class="input-cell" value="0">`;
                 r.insertBefore(td, r.lastElementChild);
             });
-            updateNames();
+            updateLabels();
         }
-        function removeRow(btn) { if (document.querySelectorAll('#tb tr').length > 1) { btn.closest('tr').remove(); updateNames(); } }
+        function removeRow(btn) { if (document.querySelectorAll('#tb tr').length > 1) { btn.closest('tr').remove(); updateLabels(); } }
         function removeCol(i) {
             const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
             if (hr.cells.length > 3) {
                 dr.deleteCell(i); hr.deleteCell(i); rows.forEach(r => r.deleteCell(i));
                 dr.querySelectorAll('button').forEach((b, idx) => b.setAttribute('onclick', `removeCol(${idx + 1})`));
-                updateNames();
+                updateLabels();
             }
         }
     </script>
