@@ -2,170 +2,181 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BO Master Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Decyzji BO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .input-cell { width: 75px; text-align: center; border: 1px solid #cbd5e1; padding: 4px; border-radius: 6px; font-weight: bold; }
-        .tab-active { border-bottom: 4px solid #2563eb; color: #1e40af; background: #f8fafc; }
-        .panel-nature { background: #0f172a; border-top: 6px solid #3b82f6; }
-        .panel-game { background: #1e293b; border-top: 6px solid #10b981; }
-        .progress-bg { background: rgba(255,255,255,0.1); border-radius: 99px; height: 8px; overflow: hidden; }
+        .input-cell { width: 85px; text-align: center; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; }
+        .input-cell:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+        .btn-action { transition: all 0.2s; }
+        .btn-action:hover { transform: translateY(-1px); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8 text-slate-900">
-    <div class="max-w-5xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border">
-        
-        <div class="flex bg-slate-100 border-b text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <button type="button" onclick="setMode('nature')" id="b-nature" class="flex-1 py-6 hover:bg-white transition border-r">Gry z Naturą</button>
-            <button type="button" onclick="setMode('game')" id="b-game" class="flex-1 py-6 hover:bg-white transition">Gry Strategiczne</button>
-        </div>
-
-        <div class="p-8">
-            <form method="POST" id="mainForm">
-                <input type="hidden" name="mode" id="m" value="{{ mode }}">
-                
-                <div class="flex justify-between items-end mb-8">
-                    <h2 id="t" class="text-3xl font-black italic uppercase tracking-tighter">Macierz</h2>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="addRow()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg hover:scale-105 transition">+ Wiersz (A)</button>
-                        <button type="button" onclick="addColumn()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg hover:scale-105 transition">+ Kolumna (B)</button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto mb-10 bg-slate-50 p-6 rounded-[2rem] border border-slate-200">
-                    <table id="mt" class="w-full text-center">
-                        <thead id="th" class="text-[10px] font-bold uppercase text-slate-400 tracking-widest">
-                            <tr id="dr"><th></th><th class="p-1"><button type="button" onclick="removeCol(1)" class="text-rose-500">usuń</button></th><th class="p-1"><button type="button" onclick="removeCol(2)" class="text-rose-500">usuń</button></th><th></th></tr>
-                            <tr id="hr"><th></th><th>B1</th><th>B2</th><th></th></tr>
-                        </thead>
-                        <tbody id="tb" class="divide-y divide-slate-200">
-                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">A1</td><td><input name="cell_0_0" class="input-cell" value="0"></td><td><input name="cell_0_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
-                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">A2</td><td><input name="cell_1_0" class="input-cell" value="0"></td><td><input name="cell_1_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="opts" class="mb-10 p-6 bg-blue-50 rounded-3xl flex items-center gap-6 border border-blue-100 hidden">
-                    <span class="text-xs font-black text-blue-700 uppercase italic">Parametr Hurwicza:</span>
-                    <input type="number" step="0.1" name="gamma" value="0.6" class="w-20 p-2 border-2 border-blue-200 rounded-xl text-center font-black">
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] shadow-xl hover:bg-blue-700 transition uppercase tracking-widest">Oblicz</button>
-            </form>
-
-            <div id="resultsView">
-                {% if results %}
-                    {% if results.type == 'nature' %}
-                    <div id="natureRes" class="mt-12 panel-nature rounded-[2.5rem] p-12 shadow-2xl text-white">
-                        <h3 class="text-blue-400 font-bold mb-8 uppercase tracking-widest text-xs">Wyniki: Gry z Naturą</h3>
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-10 text-center">
-                            <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Wald</p><p class="text-3xl font-black italic">A{{results.wald}}</p></div>
-                            <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Hurwicz</p><p class="text-3xl font-black italic">A{{results.hur}}</p></div>
-                            <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Bayes</p><p class="text-3xl font-black italic">A{{results.bayes}}</p></div>
-                            <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Savage</p><p class="text-3xl font-black italic">A{{results.sav}}</p></div>
-                        </div>
-                    </div>
-                    {% elif results.type == 'game' %}
-                    <div id="gameRes" class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="panel-game rounded-[2.5rem] p-10 shadow-2xl text-white border-l-8 border-blue-500">
-                            <p class="text-blue-400 font-black text-[10px] mb-4 uppercase italic tracking-widest">Gracz A (Zyski)</p>
-                            {% if results.data.saddle %}
-                                <p class="text-2xl font-black mb-2">A{{results.data.saddle.r}}</p>
-                                <p class="text-sm text-slate-400 italic">Gwarantowany zysk: {{results.data.va}}</p>
-                            {% elif results.data.mixed %}
-                                <div class="space-y-4">
-                                    <div>
-                                        <div class="flex justify-between text-xs mb-1"><span>Strategia A1</span><span>{{results.data.mixed.p1_pct}}%</span></div>
-                                        <div class="progress-bg"><div class="bg-blue-500 h-full" style="width: {{results.data.mixed.p1_pct}}%"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-xs mb-1"><span>Strategia A2</span><span>{{results.data.mixed.p2_pct}}%</span></div>
-                                        <div class="progress-bg"><div class="bg-blue-400 h-full" style="width: {{results.data.mixed.p2_pct}}%"></div></div>
-                                    </div>
-                                    <p class="text-xs font-bold text-blue-300 pt-2 border-t border-white/10 uppercase">Średni zysk V = {{results.data.mixed.v}}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="panel-game rounded-[2.5rem] p-10 shadow-2xl text-white border-l-8 border-rose-500">
-                            <p class="text-rose-400 font-black text-[10px] mb-4 uppercase italic tracking-widest">Gracz B (Straty)</p>
-                            {% if results.data.saddle %}
-                                <p class="text-2xl font-black mb-2">B{{results.data.saddle.c}}</p>
-                                <p class="text-sm text-slate-400 italic">Maksymalna strata: {{results.data.vb}}</p>
-                            {% elif results.data.mixed %}
-                                <div class="space-y-4">
-                                    <div>
-                                        <div class="flex justify-between text-xs mb-1"><span>Strategia B1</span><span>{{results.data.mixed.q1_pct}}%</span></div>
-                                        <div class="progress-bg"><div class="bg-rose-500 h-full" style="width: {{results.data.mixed.q1_pct}}%"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-xs mb-1"><span>Strategia B2</span><span>{{results.data.mixed.q2_pct}}%</span></div>
-                                        <div class="progress-bg"><div class="bg-rose-400 h-full" style="width: {{results.data.mixed.q2_pct}}%"></div></div>
-                                    </div>
-                                    <p class="text-xs font-bold text-rose-300 pt-2 border-t border-white/10 uppercase">Średnia strata V = {{results.data.mixed.v}}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-                {% endif %}
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Kalkulator Decyzji</h1>
+                <p class="text-slate-500">Zarządzaj macierzą 2x2 (lub większą) i obliczaj wyniki.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="addRow()" type="button" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">+ Wiersz</button>
+                <button onclick="addColumn()" type="button" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">+ Kolumna</button>
             </div>
         </div>
+
+        <form method="POST" id="matrixForm">
+            <div class="overflow-x-auto mb-8 border border-slate-100 rounded-xl">
+                <table id="matrixTable" class="w-full text-left">
+                    <thead class="bg-slate-50">
+                        <tr id="deleteHeaderRow">
+                            <th class="p-2"></th> <th class="p-2 text-center"><button type="button" onclick="removeColumn(1)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">USUŃ</button></th>
+                            <th class="p-2 text-center"><button type="button" onclick="removeColumn(2)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">USUŃ</button></th>
+                            <th class="p-2"></th> </tr>
+                        <tr id="headerRow">
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase">Wariant</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase">Stan 1</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase">Stan 2</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        <tr>
+                            <td class="p-4 font-bold text-slate-700">W1</td>
+                            <td class="p-2"><input type="text" name="cell_0_0" class="input-cell" value="0"></td>
+                            <td class="p-2"><input type="text" name="cell_0_1" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold">×</button></td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-slate-700">W2</td>
+                            <td class="p-2"><input type="text" name="cell_1_0" class="input-cell" value="0"></td>
+                            <td class="p-2"><input type="text" name="cell_1_1" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold">×</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-wrap gap-6 items-end bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <div class="w-40">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 text-center">Gamma (Hurwicz)</label>
+                    <input type="number" step="0.1" name="gamma" value="0.6" min="0" max="1" class="w-full p-3 border rounded-xl text-center font-bold text-blue-600 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 uppercase tracking-wider">
+                    Oblicz wyniki
+                </button>
+            </div>
+        </form>
+
+        {% if results %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+            <div class="p-5 rounded-2xl bg-white border-2 border-blue-100 shadow-sm">
+                <p class="text-blue-500 font-bold text-xs uppercase mb-1">Wald (Maximin)</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.wald.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Wynik: {{ results.wald.val }}</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border-2 border-emerald-100 shadow-sm">
+                <p class="text-emerald-500 font-bold text-xs uppercase mb-1">Hurwicz</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.hurwicz.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Wynik: {{ results.hurwicz.val }}</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border-2 border-purple-100 shadow-sm">
+                <p class="text-purple-500 font-bold text-xs uppercase mb-1">Bayes (A)</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.bayes.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Średnia: {{ results.bayes.val }}</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border-2 border-rose-100 shadow-sm">
+                <p class="text-rose-500 font-bold text-xs uppercase mb-1">Savage</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.savage.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Strata: {{ results.savage.val }}</p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <script>
-        function setMode(mode) {
-            document.getElementById('m').value = mode;
-            document.getElementById('t').innerText = mode === 'nature' ? 'Gry z Naturą' : 'Gry Strategiczne';
-            document.getElementById('opts').style.display = (mode === 'nature') ? 'flex' : 'none';
-            document.querySelectorAll('.flex > button').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById('b-' + mode).classList.add('tab-active');
-            
-            const nBox = document.getElementById('natureRes');
-            const gBox = document.getElementById('gameRes');
-            if(nBox) nBox.style.display = 'none';
-            if(gBox) gBox.style.display = 'none';
-            
-            updateLabels();
-        }
-        setMode('{{mode}}' || 'nature');
-
-        function updateLabels() {
-            const rows = document.querySelectorAll('#tb tr');
-            rows.forEach((r, i) => {
-                r.cells[0].innerText = 'A' + (i + 1);
-                r.querySelectorAll('input').forEach((n, j) => n.name = `cell_${i}_${j}`);
+        function updateNames() {
+            // Aktualizacja nazw wierszy W1, W2...
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach((row, i) => {
+                row.cells[0].innerText = 'W' + (i + 1);
+                // Aktualizacja atrybutów name dla inputów
+                const inputs = row.querySelectorAll('input');
+                inputs.forEach((input, j) => {
+                    input.name = `cell_${i}_${j}`;
+                });
             });
-            const heads = document.querySelectorAll('#hr th');
-            for (let i = 1; i < heads.length - 1; i++) {
-                heads[i].innerText = 'B' + i;
+            // Aktualizacja nazw kolumn Stan 1, Stan 2...
+            const headerCells = document.querySelectorAll('#headerRow th');
+            for(let i = 1; i < headerCells.length - 1; i++) {
+                headerCells[i].innerText = 'Stan ' + i;
             }
         }
+
         function addRow() {
-            const b = document.getElementById('tb'), c = document.getElementById('hr').cells.length - 2, r = document.createElement('tr');
-            let s = `<td class="p-4 font-black text-xs text-slate-400 text-left uppercase"></td>`;
-            for (let i = 0; i < c; i++) s += `<td><input class="input-cell" value="0"></td>`;
-            s += `<td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td>`;
-            r.innerHTML = s; b.appendChild(r); updateLabels();
+            const body = document.getElementById('tableBody');
+            const colCount = document.getElementById('headerRow').cells.length - 2;
+            const row = document.createElement('tr');
+            let cells = `<td class="p-4 font-bold text-slate-700"></td>`;
+            for (let i = 0; i < colCount; i++) {
+                cells += `<td class="p-2"><input type="text" class="input-cell" value="0"></td>`;
+            }
+            cells += `<td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold">×</button></td>`;
+            row.innerHTML = cells;
+            body.appendChild(row);
+            updateNames();
         }
+
         function addColumn() {
-            const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
-            const nI = hr.cells.length - 1;
-            const thD = document.createElement('th'); thD.className = "p-1"; thD.innerHTML = `<button type="button" onclick="removeCol(${nI})" class="text-rose-500 font-bold uppercase text-[9px]">usuń</button>`;
-            dr.insertBefore(thD, dr.lastElementChild);
-            const thH = document.createElement('th'); thH.className = "p-3";
-            hr.insertBefore(thH, hr.lastElementChild);
-            rows.forEach(r => {
-                const td = document.createElement('td'); td.innerHTML = `<input class="input-cell" value="0">`;
-                r.insertBefore(td, r.lastElementChild);
+            const delHeader = document.getElementById('deleteHeaderRow');
+            const header = document.getElementById('headerRow');
+            const rows = document.querySelectorAll('#tableBody tr');
+            const newColIdx = header.cells.length - 1;
+
+            // Przycisk usuwania kolumny
+            const thDel = document.createElement('th');
+            thDel.className = "p-2 text-center";
+            thDel.innerHTML = `<button type="button" onclick="removeColumn(${newColIdx})" class="text-rose-500 hover:text-rose-700 text-xs font-bold">USUŃ</button>`;
+            delHeader.insertBefore(thDel, delHeader.lastElementChild);
+
+            // Nagłówek "Stan X"
+            const th = document.createElement('th');
+            th.className = "p-4 text-xs font-bold text-slate-400 uppercase";
+            header.insertBefore(th, header.lastElementChild);
+
+            // Komórki w wierszach
+            rows.forEach(row => {
+                const td = document.createElement('td');
+                td.className = "p-2";
+                td.innerHTML = `<input type="text" class="input-cell" value="0">`;
+                row.insertBefore(td, row.lastElementChild);
             });
-            updateLabels();
+            updateNames();
         }
-        function removeRow(btn) { if (document.querySelectorAll('#tb tr').length > 1) { btn.closest('tr').remove(); updateLabels(); } }
-        function removeCol(i) {
-            const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
-            if (hr.cells.length > 3) {
-                dr.deleteCell(i); hr.deleteCell(i); rows.forEach(r => r.deleteCell(i));
-                dr.querySelectorAll('button').forEach((b, idx) => b.setAttribute('onclick', `removeCol(${idx + 1})`));
+
+        function removeRow(btn) {
+            const rows = document.querySelectorAll('#tableBody tr');
+            if (rows.length > 1) {
+                btn.parentElement.parentElement.remove();
+                updateNames();
+            }
+        }
+
+        function removeColumn(index) {
+            const delHeader = document.getElementById('deleteHeaderRow');
+            const header = document.getElementById('headerRow');
+            const rows = document.querySelectorAll('#tableBody tr');
+
+            if (header.cells.length > 3) { // Blokada usuwania jeśli zostaje 1 kolumna
+                delHeader.deleteCell(index);
+                header.deleteCell(index);
+                rows.forEach(row => row.deleteCell(index));
+                
+                // Aktualizacja funkcji onclick dla pozostałych przycisków usuwania kolumn
+                const delButtons = delHeader.querySelectorAll('button');
+                delButtons.forEach((btn, i) => {
+                    btn.setAttribute('onclick', `removeColumn(${i + 1})`);
+                });
                 updateNames();
             }
         }
