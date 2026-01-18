@@ -5,19 +5,11 @@ import re
 app = Flask(__name__, template_folder='../templates')
 
 def solve_games(matrix):
-    """Obliczenia dla gier dwuosobowych o sumie zerowej (A vs B)"""
     r_min = np.min(matrix, axis=1)
     c_max = np.max(matrix, axis=0)
     maximin = float(np.max(r_min))
     minimax = float(np.min(c_max))
-    
-    res = {
-        "va": maximin, 
-        "vb": minimax, 
-        "equal": maximin == minimax,
-        "saddle": None, 
-        "mixed": None
-    }
+    res = {"va": maximin, "vb": minimax, "equal": maximin == minimax, "saddle": None, "mixed": None}
     
     if maximin == minimax:
         r_idx, c_idx = int(np.argmax(r_min)), int(np.argmin(c_max))
@@ -41,32 +33,19 @@ def index():
     results, mode = None, request.form.get('mode', 'nature')
     if request.method == 'POST':
         try:
-            # Pobieranie danych z macierzy niezależnie od wymiarów
             cells = {tuple(map(int, re.match(r'cell_(\d+)_(\d+)', k).groups())): float(v.replace(',', '.')) 
                      for k, v in request.form.items() if re.match(r'cell_(\d+)_(\d+)', k)}
-            
-            if not cells: 
-                return render_template('index.html', results=None, mode=mode)
-                
-            r_max, c_max = max(k[0] for k in cells.keys()), max(k[1] for k in cells.keys())
-            mat = np.zeros((r_max + 1, c_max + 1))
-            for (r, c), v in cells.items(): 
-                mat[r, c] = v
+            if not cells: return render_template('index.html', results=None, mode=mode)
+            r_m, c_m = max(k[0] for k in cells.keys()), max(k[1] for k in cells.keys())
+            mat = np.zeros((r_m + 1, c_m + 1))
+            for (r, c), v in cells.items(): mat[r, c] = v
             
             if mode == 'nature':
                 g = float(request.form.get('gamma', 0.6).replace(',', '.'))
                 mi = np.min(mat, axis=1)
-                results = {
-                    "type": "nature", 
-                    "wald": int(np.argmax(mi)+1), 
-                    "hur": int(np.argmax(g*mi + (1-g)*np.max(mat, axis=1))+1),
-                    "bayes": int(np.argmax(np.mean(mat, axis=1))+1), 
-                    "sav": int(np.argmin(np.max(np.max(mat, axis=0)-mat, axis=1))+1)
-                }
+                results = {"type": "nature", "wald": int(np.argmax(mi)+1), "hur": int(np.argmax(g*mi + (1-g)*np.max(mat, axis=1))+1),
+                           "bayes": int(np.argmax(np.mean(mat, axis=1))+1), "sav": int(np.argmin(np.max(np.max(mat, axis=0)-mat, axis=1))+1)}
             elif mode == 'game': 
                 results = {"type": "game", "data": solve_games(mat)}
-                
-        except Exception as e: 
-            results = {"error": "Wprowadź poprawne dane liczbowe."}
-            
+        except Exception as e: results = {"error": str(e)}
     return render_template('index.html', results=results, mode=mode)
