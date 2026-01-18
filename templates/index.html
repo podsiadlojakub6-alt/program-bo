@@ -5,137 +5,98 @@
     <title>BO Master Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .input-cell { width: 75px; text-align: center; border: 1px solid #cbd5e1; padding: 5px; border-radius: 6px; font-weight: bold; }
+        .input-cell { width: 75px; text-align: center; border: 1px solid #cbd5e1; padding: 4px; border-radius: 6px; font-weight: bold; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #1e40af; background: #f8fafc; }
-        .panel-nature { background: #0f172a; border-top: 4px solid #3b82f6; }
-        .panel-game { background: #1e293b; border-top: 4px solid #10b981; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-4 md:p-8">
-    <div class="max-w-6xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
-        <div class="flex bg-slate-50 border-b text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <button onclick="setM('nature')" id="b-nature" class="flex-1 py-5 hover:bg-white transition border-r">Gry z Naturą</button>
-            <button onclick="setM('game')" id="b-game" class="flex-1 py-5 hover:bg-white transition border-r">Gry Strategiczne</button>
-            <button onclick="setM('transport')" id="b-transport" class="flex-1 py-4 hover:bg-white transition border-r text-[9px]">Transport</button>
-            <button onclick="setM('simplex')" id="b-simplex" class="flex-1 py-4 hover:bg-white transition text-[9px]">Simplex</button>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border">
+        <div class="flex bg-slate-100 border-b text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <button type="button" onclick="setMode('nature')" id="b-nature" class="flex-1 py-5 hover:bg-white transition border-r">Gry z Naturą</button>
+            <button type="button" onclick="setMode('game')" id="b-game" class="flex-1 py-5 hover:bg-white transition border-r">Gry Strategiczne</button>
+            <button type="button" onclick="setMode('transport')" id="b-transport" class="flex-1 py-5 hover:bg-white transition border-r">Transport</button>
+            <button type="button" onclick="setMode('simplex')" id="b-simplex" class="flex-1 py-5 hover:bg-white transition">Simplex</button>
         </div>
 
-        <div class="p-6 md:p-10">
-            <form method="POST">
+        <div class="p-8">
+            <form method="POST" id="mainForm">
                 <input type="hidden" name="mode" id="m" value="{{ mode }}">
                 
-                <div class="flex flex-wrap justify-between items-end mb-6 gap-4">
+                <div class="flex justify-between items-end mb-6">
                     <div>
-                        <h2 id="t" class="text-3xl font-black text-slate-800 tracking-tighter">Macierz</h2>
+                        <h2 id="t" class="text-3xl font-black text-slate-800 tracking-tighter uppercase italic">Macierz</h2>
                         {% if results and results.type == 'game' %}
-                        <div class="mt-2 flex gap-4 text-xs font-bold">
-                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded">Va (Maximin) = {{results.data.va}}</span>
-                            <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded">Vb (Minimax) = {{results.data.vb}}</span>
+                        <div class="mt-2 flex gap-4 text-[10px] font-bold">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded">Va = {{results.data.va}}</span>
+                            <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded">Vb = {{results.data.vb}}</span>
                             <span class="px-2 py-1 {% if results.data.equal %}bg-emerald-100 text-emerald-700{% else %}bg-amber-100 text-amber-700{% endif %} rounded">
-                                {% if results.data.equal %}Va = Vb (Stabilna){% else %}Va ≠ Vb (Niestabilna){% endif %}
+                                {% if results.data.equal %}STABILNA (Va=Vb){% else %}NIESTABILNA (Va≠Vb){% endif %}
                             </span>
                         </div>
                         {% endif %}
                     </div>
                     <div class="flex gap-2">
-                        <button type="button" onclick="aR()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">+ Wiersz</button>
-                        <button type="button" onclick="aC()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">+ Kolumna</button>
+                        <button type="button" onclick="addRow()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black">+ Wiersz</button>
+                        <button type="button" onclick="addColumn()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black">+ Kolumna</button>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto mb-8 bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                    <table id="mt" class="w-full">
-                        <thead id="th" class="text-[10px] font-black uppercase text-slate-400">
-                            <tr id="dr"><th></th><th class="p-1"><button type="button" onclick="rC(1)" class="text-rose-400">usuń</button></th><th class="p-1"><button type="button" onclick="rC(2)" class="text-rose-400">usuń</button></th><th></th></tr>
-                            <tr id="hr"><th></th><th class="p-2 text-center">Kol 1</th><th class="p-2 text-center">Kol 2</th><th></th></tr>
+                <div class="overflow-x-auto mb-8 bg-slate-50 p-6 rounded-[2rem] border border-slate-200">
+                    <table id="mt" class="w-full text-center">
+                        <thead id="th" class="text-[10px] font-bold uppercase text-slate-400">
+                            <tr id="dr"><th></th><th class="p-1"><button type="button" onclick="removeCol(1)" class="text-rose-400">usuń</button></th><th class="p-1"><button type="button" onclick="removeCol(2)" class="text-rose-400">usuń</button></th><th></th></tr>
+                            <tr id="hr"><th></th><th>Kolumna 1</th><th>Kolumna 2</th><th></th></tr>
                         </thead>
-                        <tbody id="tb" class="divide-y divide-slate-200 text-center">
-                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">W1</td><td><input name="cell_0_0" class="input-cell" value="0"></td><td><input name="cell_0_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="rR(this)" class="text-slate-300 hover:text-rose-500">×</button></td></tr>
-                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">W2</td><td><input name="cell_1_0" class="input-cell" value="0"></td><td><input name="cell_1_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="rR(this)" class="text-slate-300 hover:text-rose-500">×</button></td></tr>
+                        <tbody id="tb" class="divide-y divide-slate-200">
+                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">W1</td><td><input name="cell_0_0" class="input-cell" value="0"></td><td><input name="cell_0_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
+                            <tr><td class="p-4 font-black text-xs text-slate-400 text-left">W2</td><td><input name="cell_1_0" class="input-cell" value="0"></td><td><input name="cell_1_1" class="input-cell" value="0"></td><td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td></tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div id="opts" class="mb-8 p-6 bg-blue-50 rounded-2xl flex items-center gap-4 border border-blue-100 hidden">
-                    <span class="text-xs font-black text-blue-800 uppercase">Współczynnik Hurwicza:</span>
-                    <input type="number" step="0.1" name="gamma" value="0.6" class="w-20 p-2 border-2 border-blue-200 rounded-xl text-center font-black text-blue-600">
+                    <span class="text-xs font-black text-blue-700 uppercase">Parametr Hurwicza:</span>
+                    <input type="number" step="0.1" name="gamma" value="0.6" class="w-20 p-2 border-2 border-blue-200 rounded-xl text-center font-bold">
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-5 rounded-[2rem] shadow-xl hover:bg-blue-700 transition transform active:scale-95 uppercase tracking-widest">Oblicz Moduł</button>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-5 rounded-[2rem] shadow-xl hover:bg-blue-700 transition uppercase tracking-widest">Oblicz</button>
             </form>
 
             {% if results %}
-            <div class="mt-12">
+            <div class="mt-10">
                 {% if results.type == 'nature' %}
-                <div class="panel-nature rounded-[2.5rem] p-10 shadow-2xl text-white">
-                    <h3 class="text-blue-400 font-black mb-8 uppercase tracking-[0.2em] text-xs">Wyniki: Gry z Naturą</h3>
+                <div class="bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl text-white border-t-8 border-blue-500">
+                    <h3 class="text-blue-400 font-bold mb-8 uppercase tracking-widest text-xs">Raport: Gry z Naturą</h3>
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                        <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Wald</p><p class="text-2xl font-black">Wariant {{results.wald}}</p></div>
-                        <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Hurwicz</p><p class="text-2xl font-black">Wariant {{results.hur}}</p></div>
-                        <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Bayes</p><p class="text-2xl font-black">Wariant {{results.bayes}}</p></div>
-                        <div><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Savage</p><p class="text-2xl font-black">Wariant {{results.sav}}</p></div>
+                        <div><p class="text-[10px] text-slate-500 font-bold mb-2">WALD</p><p class="text-2xl font-black">Wariant {{results.wald}}</p></div>
+                        <div><p class="text-[10px] text-slate-500 font-bold mb-2">HURWICZ</p><p class="text-2xl font-black">Wariant {{results.hur}}</p></div>
+                        <div><p class="text-[10px] text-slate-500 font-bold mb-2">BAYES</p><p class="text-2xl font-black">Wariant {{results.bayes}}</p></div>
+                        <div><p class="text-[10px] text-slate-500 font-bold mb-2">SAVAGE</p><p class="text-2xl font-black">Wariant {{results.sav}}</p></div>
                     </div>
                 </div>
-
                 {% elif results.type == 'game' %}
-                <div class="panel-game rounded-[2.5rem] p-10 shadow-2xl text-white">
-                    <div class="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
-                        <h3 class="text-emerald-400 font-black uppercase tracking-[0.2em] text-xs">Raport: Gry Strategiczne</h3>
-                        <span class="text-2xl font-black italic">V = {{results.data.va if results.data.equal else results.data.mixed.v if results.data.mixed else '?'}}</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-white font-bold">
+                    <div class="bg-slate-800 p-8 rounded-[2rem] border-l-8 border-blue-500">
+                        <p class="text-blue-400 text-[10px] uppercase mb-4">Gracz A (Wiersze)</p>
+                        {% if results.data.saddle %}<p class="text-xl">Wybiera W{{results.data.saddle.r}}</p><p class="text-sm text-slate-400">Zysk: {{results.data.va}}</p>
+                        {% elif results.data.mixed %}<p class="text-sm leading-relaxed italic">"Wybieram W1 w {{results.data.mixed.p1_pct}}% i W2 w {{results.data.mixed.p2_pct}}%. Mój średni zysk to {{results.data.mixed.v}}."</p>{% endif %}
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-slate-800/50 p-6 rounded-3xl border border-blue-500/30">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                <h4 class="font-black text-blue-400 uppercase text-xs">Gracz A (Wiersze)</h4>
-                            </div>
-                            <div class="space-y-3">
-                                {% if results.data.saddle %}
-                                    <p class="text-lg font-bold">Wybiera: Strategię W{{results.data.saddle.r}}</p>
-                                    <p class="text-sm text-slate-400 italic">"Mój gwarantowany zysk to {{results.data.saddle.v}}."</p>
-                                {% elif results.data.mixed %}
-                                    <div class="space-y-1">
-                                        <p class="text-sm">Wybór W1: <span class="font-black text-blue-400">{{results.data.mixed.p1_pct}}%</span></p>
-                                        <p class="text-sm">Wybór W2: <span class="font-black text-blue-400">{{results.data.mixed.p2_pct}}%</span></p>
-                                    </div>
-                                    <p class="text-sm font-bold mt-4 pt-4 border-t border-slate-700">Średni zysk: {{results.data.mixed.v}}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-800/50 p-6 rounded-3xl border border-rose-500/30">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-3 h-3 bg-rose-500 rounded-full"></div>
-                                <h4 class="font-black text-rose-400 uppercase text-xs">Gracz B (Kolumny)</h4>
-                            </div>
-                            <div class="space-y-3">
-                                {% if results.data.saddle %}
-                                    <p class="text-lg font-bold">Wybiera: Strategię K{{results.data.saddle.c}}</p>
-                                    <p class="text-sm text-slate-400 italic">"Ograniczam moją stratę do {{results.data.saddle.v}}."</p>
-                                {% elif results.data.mixed %}
-                                    <div class="space-y-1">
-                                        <p class="text-sm">Wybór K1: <span class="font-black text-rose-400">{{results.data.mixed.q1_pct}}%</span></p>
-                                        <p class="text-sm">Wybór K2: <span class="font-black text-rose-400">{{results.data.mixed.q2_pct}}%</span></p>
-                                    </div>
-                                    <p class="text-sm font-bold mt-4 pt-4 border-t border-slate-700">Średnia strata: {{results.data.mixed.v}}</p>
-                                {% endif %}
-                            </div>
-                        </div>
+                    <div class="bg-slate-800 p-8 rounded-[2rem] border-l-8 border-rose-500">
+                        <p class="text-rose-400 text-[10px] uppercase mb-4">Gracz B (Kolumny)</p>
+                        {% if results.data.saddle %}<p class="text-xl">Wybiera K{{results.data.saddle.c}}</p><p class="text-sm text-slate-400">Strata: {{results.data.vb}}</p>
+                        {% elif results.data.mixed %}<p class="text-sm leading-relaxed italic">"Wybieram K1 w {{results.data.mixed.q1_pct}}% i K2 w {{results.data.mixed.q2_pct}}%. Moja średnia strata to {{results.data.mixed.v}}."</p>{% endif %}
                     </div>
                 </div>
-
                 {% elif results.type == 'trans' %}
-                <div class="bg-emerald-900 rounded-[2.5rem] p-10 text-white shadow-2xl">
-                    <p class="text-emerald-400 font-black text-xs uppercase mb-4 tracking-widest">Zagadnienie Transportowe</p>
-                    <p class="text-5xl font-black mb-6">Koszt: {{results.data.cost}}</p>
-                    <pre class="bg-black/20 p-6 rounded-2xl font-mono text-xs">{{results.data.alloc}}</pre>
+                <div class="bg-emerald-900 p-10 rounded-[2.5rem] text-white shadow-xl">
+                    <p class="text-emerald-400 font-black text-xs mb-2">KOSZT TRANSPORTU</p>
+                    <p class="text-5xl font-black">{{results.data.cost}}</p>
                 </div>
                 {% elif results.type == 'simplex' %}
-                <div class="bg-blue-900 rounded-[2.5rem] p-10 text-white shadow-2xl">
-                    <p class="text-blue-400 font-black text-xs uppercase mb-4 tracking-widest">Optymalizacja Simplex</p>
-                    <p class="text-5xl font-black mb-6 text-emerald-400">Max Z = {{results.data.obj}}</p>
-                    <div class="flex gap-4">{% for v in results.data.x %}<span class="bg-white/10 px-4 py-2 rounded-xl font-bold">X{{loop.index}} = {{v}}</span>{% endfor %}</div>
+                <div class="bg-blue-900 p-10 rounded-[2.5rem] text-white shadow-xl">
+                    <p class="text-blue-400 font-black text-xs mb-2">OPTIMUM SIMPLEX</p>
+                    <p class="text-4xl font-black text-emerald-400">Z = {{results.data.obj}}</p>
+                    <div class="mt-4 flex gap-4">{% for v in results.data.x %}<span>X{{loop.index}}={{v}}</span>{% endfor %}</div>
                 </div>
                 {% endif %}
             </div>
@@ -144,17 +105,17 @@
     </div>
 
     <script>
-        function setM(m) {
-            document.getElementById('m').value = m;
-            document.getElementById('t').innerText = m === 'nature' ? 'Gry z Naturą' : (m === 'game' ? 'Gry Strategiczne' : m.toUpperCase());
-            document.getElementById('opts').style.display = (m === 'nature') ? 'flex' : 'none';
+        function setMode(mode) {
+            document.getElementById('m').value = mode;
+            document.getElementById('t').innerText = mode === 'nature' ? 'Gry z Naturą' : (mode === 'game' ? 'Gry Strategiczne' : mode.toUpperCase());
+            document.getElementById('opts').style.display = (mode === 'nature') ? 'flex' : 'none';
             document.querySelectorAll('.flex > button').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById('b-' + m).classList.add('tab-active');
-            uN();
+            document.getElementById('b-' + mode).classList.add('tab-active');
+            updateNames();
         }
-        setM('{{mode}}' || 'nature');
+        setMode('{{mode}}' || 'nature');
 
-        function uN() {
+        function updateNames() {
             const m = document.getElementById('m').value;
             const rows = document.querySelectorAll('#tb tr');
             rows.forEach((r, i) => {
@@ -165,4 +126,42 @@
                 r.querySelectorAll('input').forEach((n, j) => n.name = `cell_${i}_${j}`);
             });
             const heads = document.querySelectorAll('#hr th');
-            for (let i = 1; i < heads.length - 1; i
+            for (let i = 1; i < heads.length - 1; i++) {
+                let lbl = (m==='game'?'G2:K':'K') + i;
+                if (m === 'transport' && i === heads.length - 2) lbl = 'PODAŻ';
+                if (m === 'simplex' && i === heads.length - 2) lbl = 'LIMIT';
+                heads[i].innerText = lbl;
+            }
+        }
+        function addRow() {
+            const b = document.getElementById('tb'), c = document.getElementById('hr').cells.length - 2, r = document.createElement('tr');
+            let s = `<td class="p-4 font-black text-xs text-slate-400 text-left"></td>`;
+            for (let i = 0; i < c; i++) s += `<td><input class="input-cell" value="0"></td>`;
+            s += `<td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300">×</button></td>`;
+            r.innerHTML = s; b.appendChild(r); updateNames();
+        }
+        function addColumn() {
+            const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
+            const nI = hr.cells.length - 1;
+            const thD = document.createElement('th'); thD.className = "p-1"; thD.innerHTML = `<button type="button" onclick="removeCol(${nI})" class="text-rose-400">usuń</button>`;
+            dr.insertBefore(thD, dr.lastElementChild);
+            const thH = document.createElement('th'); thH.className = "p-2";
+            hr.insertBefore(thH, hr.lastElementChild);
+            rows.forEach(r => {
+                const td = document.createElement('td'); td.innerHTML = `<input class="input-cell" value="0">`;
+                r.insertBefore(td, r.lastElementChild);
+            });
+            updateNames();
+        }
+        function removeRow(btn) { if (document.querySelectorAll('#tb tr').length > 1) { btn.closest('tr').remove(); updateNames(); } }
+        function removeCol(i) {
+            const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
+            if (hr.cells.length > 3) {
+                dr.deleteCell(i); hr.deleteCell(i); rows.forEach(r => r.deleteCell(i));
+                dr.querySelectorAll('button').forEach((b, idx) => b.setAttribute('onclick', `removeCol(${idx + 1})`));
+                updateNames();
+            }
+        }
+    </script>
+</body>
+</html>
