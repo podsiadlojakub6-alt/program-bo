@@ -2,18 +2,20 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Kalkulator Teorii Gier Pro</title>
+    <title>BO Kalkulator Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .input-cell { width: 75px; text-align: center; border: 1px solid #cbd5e1; padding: 6px; border-radius: 8px; font-weight: bold; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #1e40af; background: #f8fafc; }
-        .card-shadow { shadow-xl shadow-slate-200/50; }
+        .res-nature { background: #0f172a; border-top: 6px solid #3b82f6; }
+        .card-A { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 6px solid #3b82f6; }
+        .card-B { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 6px solid #f43f5e; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-10">
-    <div class="max-w-5xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden border">
+<body class="bg-slate-50 min-h-screen p-4 md:p-10 text-slate-900">
+    <div class="max-w-5xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border">
         
-        <div class="flex bg-slate-100 border-b text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <div class="flex bg-slate-100 border-b text-xs font-black uppercase tracking-widest text-slate-400">
             <button type="button" onclick="setMode('nature')" id="b-nature" class="flex-1 py-6 hover:bg-white transition border-r">Gry z Naturą</button>
             <button type="button" onclick="setMode('game')" id="b-game" class="flex-1 py-6 hover:bg-white transition">Gry Strategiczne</button>
         </div>
@@ -23,25 +25,17 @@
                 <input type="hidden" name="mode" id="m" value="{{ mode }}">
                 
                 <div class="flex justify-between items-end mb-8">
-                    <div>
-                        <h2 id="t" class="text-3xl font-black text-slate-800 tracking-tighter uppercase italic">Macierz Danych</h2>
-                        {% if results and results.type == 'game' %}
-                        <div class="mt-3 flex gap-3 text-[10px] font-bold">
-                            <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg">Va = {{results.data.va}}</span>
-                            <span class="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg">Vb = {{results.data.vb}}</span>
-                        </div>
-                        {% endif %}
-                    </div>
+                    <h2 id="t" class="text-3xl font-black italic uppercase tracking-tighter">Macierz</h2>
                     <div class="flex gap-2">
-                        <button type="button" onclick="addRow()" class="bg-slate-900 text-white px-5 py-2 rounded-2xl text-xs font-black shadow-lg hover:scale-105 transition">+ Wiersz (A)</button>
-                        <button type="button" onclick="addColumn()" class="bg-slate-900 text-white px-5 py-2 rounded-2xl text-xs font-black shadow-lg hover:scale-105 transition">+ Kolumna (B)</button>
+                        <button type="button" onclick="addRow()" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-black shadow-lg hover:scale-105 transition">+ Wiersz (A)</button>
+                        <button type="button" onclick="addColumn()" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-black shadow-lg hover:scale-105 transition">+ Kolumna (B)</button>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto mb-10 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
+                <div class="overflow-x-auto mb-10 bg-slate-50 p-8 rounded-[2rem] border border-slate-200 shadow-inner">
                     <table id="mt" class="w-full text-center">
-                        <thead id="th" class="text-[10px] font-black uppercase text-slate-400">
-                            <tr id="dr"><th></th><th class="p-2"><button type="button" onclick="removeCol(1)" class="text-rose-500">usuń</button></th><th class="p-2"><button type="button" onclick="removeCol(2)" class="text-rose-500">usuń</button></th><th></th></tr>
+                        <thead id="th" class="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <tr id="dr"><th></th><th class="p-2"><button type="button" onclick="removeCol(1)" class="text-rose-500 hover:font-bold">usuń</button></th><th class="p-2"><button type="button" onclick="removeCol(2)" class="text-rose-500 hover:font-bold">usuń</button></th><th></th></tr>
                             <tr id="hr"><th></th><th>B1</th><th>B2</th><th></th></tr>
                         </thead>
                         <tbody id="tb" class="divide-y divide-slate-200">
@@ -52,81 +46,56 @@
                 </div>
 
                 <div id="opts" class="mb-10 p-6 bg-blue-50 rounded-3xl flex items-center gap-6 border border-blue-100 hidden">
-                    <span class="text-xs font-black text-blue-700 uppercase">Parametr Hurwicza:</span>
-                    <input type="number" step="0.1" name="gamma" value="0.6" class="w-24 p-3 border-2 border-blue-200 rounded-2xl text-center font-black text-blue-600">
+                    <span class="text-xs font-black text-blue-700 uppercase italic">Parametr Hurwicza:</span>
+                    <input type="number" step="0.1" name="gamma" value="0.6" class="w-24 p-3 border-2 border-blue-200 rounded-2xl text-center font-black text-blue-600 focus:ring-4 focus:ring-blue-100 outline-none">
                 </div>
 
                 <button type="submit" class="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] shadow-2xl hover:bg-blue-700 transition transform active:scale-95 uppercase tracking-widest">Oblicz</button>
             </form>
 
             {% if results %}
-            <div class="mt-12">
-                {% if results.type == 'nature' %}
-                <div id="natureResults">
-                    <h3 class="text-slate-800 font-black mb-6 uppercase tracking-widest text-sm italic">Raport: Gry z Naturą</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-white border-b-4 border-blue-500 rounded-2xl p-6 shadow-xl shadow-blue-100/30">
-                            <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Wald</p>
-                            <p class="text-3xl font-black text-slate-800">A{{results.wald}}</p>
-                            <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Maximin</span>
-                        </div>
-                        <div class="bg-white border-b-4 border-emerald-500 rounded-2xl p-6 shadow-xl shadow-emerald-100/30">
-                            <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Hurwicz</p>
-                            <p class="text-3xl font-black text-slate-800">A{{results.hur}}</p>
-                            <span class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">Ostrożny</span>
-                        </div>
-                        <div class="bg-white border-b-4 border-purple-500 rounded-2xl p-6 shadow-xl shadow-purple-100/30">
-                            <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Bayes</p>
-                            <p class="text-3xl font-black text-slate-800">A{{results.bayes}}</p>
-                            <span class="text-[9px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-bold">Średnia</span>
-                        </div>
-                        <div class="bg-white border-b-4 border-rose-500 rounded-2xl p-6 shadow-xl shadow-rose-100/30">
-                            <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Savage</p>
-                            <p class="text-3xl font-black text-slate-800">A{{results.sav}}</p>
-                            <span class="text-[9px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold">Minimax Strat</span>
+            <div id="resultsView" class="mt-12">
+                {% if results.error %}
+                    <div class="p-6 bg-rose-100 text-rose-700 font-bold rounded-2xl border border-rose-200">{{ results.error }}</div>
+                {% elif results.type == 'nature' %}
+                    <div class="res-nature rounded-[2.5rem] p-12 shadow-2xl text-white">
+                        <h3 class="text-blue-400 font-black mb-10 uppercase tracking-[0.2em] text-xs">Raport: Gry z Naturą</h3>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Wald</p><p class="text-4xl font-black">A{{results.wald}}</p></div>
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Hurwicz</p><p class="text-4xl font-black">A{{results.hur}}</p></div>
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Bayes</p><p class="text-4xl font-black">A{{results.bayes}}</p></div>
+                            <div class="border-l border-slate-700"><p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Savage</p><p class="text-4xl font-black">A{{results.sav}}</p></div>
                         </div>
                     </div>
-                </div>
-                {% endif %}
-
                 {% elif results.type == 'game' %}
-                <div id="gameResults" class="space-y-6">
-                    <h3 class="text-slate-800 font-black mb-2 uppercase tracking-widest text-sm italic">Analiza Strategiczna</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2.5rem] p-8 text-white shadow-2xl">
-                            <div class="flex items-center gap-3 mb-6">
-                                <span class="bg-white/20 p-2 rounded-lg">👤</span>
-                                <h4 class="font-black uppercase text-xs">Strategia Gracza A</h4>
-                            </div>
+                        <div class="card-A rounded-[2.5rem] p-10 shadow-2xl text-white">
+                            <h3 class="text-blue-400 font-black uppercase text-xs tracking-widest mb-6 italic">Gracz A (Zyski)</h3>
                             {% if results.data.saddle %}
-                                <p class="text-4xl font-black mb-2">A{{results.data.saddle.r}}</p>
-                                <p class="text-blue-200 text-sm italic">"To mój gwarantowany zysk: {{results.data.va}}"</p>
+                                <p class="text-3xl font-black">Strategia: A{{results.data.saddle.r}}</p>
+                                <p class="text-sm text-slate-400 mt-4 italic">"Gwarantuję zysk V = {{results.data.saddle.v}}"</p>
                             {% elif results.data.mixed %}
-                                <div class="space-y-3">
-                                    <div class="flex justify-between border-b border-white/10 pb-2"><span>Opcja A1</span><span class="font-black">{{results.data.mixed.p1_pct}}%</span></div>
-                                    <div class="flex justify-between border-b border-white/10 pb-2"><span>Opcja A2</span><span class="font-black">{{results.data.mixed.p2_pct}}%</span></div>
-                                    <p class="text-xs bg-white/10 p-3 rounded-xl mt-4 italic">Średni zysk V = {{results.data.mixed.v}}</p>
+                                <div class="space-y-4">
+                                    <p class="text-sm">Strategia A1: <span class="text-blue-400 font-black text-xl ml-2">{{results.data.mixed.p1_pct}}%</span></p>
+                                    <p class="text-sm">Strategia A2: <span class="text-blue-400 font-black text-xl ml-2">{{results.data.mixed.p2_pct}}%</span></p>
+                                    <p class="pt-4 border-t border-slate-700 font-bold text-sm">Oczekiwany zysk: {{results.data.mixed.v}}</p>
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="bg-gradient-to-br from-rose-600 to-rose-800 rounded-[2.5rem] p-8 text-white shadow-2xl">
-                            <div class="flex items-center gap-3 mb-6">
-                                <span class="bg-white/20 p-2 rounded-lg">🛡️</span>
-                                <h4 class="font-black uppercase text-xs">Strategia Gracza B</h4>
-                            </div>
+                        <div class="card-B rounded-[2.5rem] p-10 shadow-2xl text-white">
+                            <h3 class="text-rose-400 font-black uppercase text-xs tracking-widest mb-6 italic">Gracz B (Straty)</h3>
                             {% if results.data.saddle %}
-                                <p class="text-4xl font-black mb-2">B{{results.data.saddle.c}}</p>
-                                <p class="text-rose-200 text-sm italic">"To moja maksymalna strata: {{results.data.vb}}"</p>
+                                <p class="text-3xl font-black">Strategia: B{{results.data.saddle.c}}</p>
+                                <p class="text-sm text-slate-400 mt-4 italic">"Ograniczam stratę V = {{results.data.saddle.v}}"</p>
                             {% elif results.data.mixed %}
-                                <div class="space-y-3">
-                                    <div class="flex justify-between border-b border-white/10 pb-2"><span>Opcja B1</span><span class="font-black">{{results.data.mixed.q1_pct}}%</span></div>
-                                    <div class="flex justify-between border-b border-white/10 pb-2"><span>Opcja B2</span><span class="font-black">{{results.data.mixed.q2_pct}}%</span></div>
-                                    <p class="text-xs bg-white/10 p-3 rounded-xl mt-4 italic">Średnia strata V = {{results.data.mixed.v}}</p>
+                                <div class="space-y-4">
+                                    <p class="text-sm">Strategia B1: <span class="text-rose-400 font-black text-xl ml-2">{{results.data.mixed.q1_pct}}%</span></p>
+                                    <p class="text-sm">Strategia B2: <span class="text-rose-400 font-black text-xl ml-2">{{results.data.mixed.q2_pct}}%</span></p>
+                                    <p class="pt-4 border-t border-slate-700 font-bold text-sm">Oczekiwana strata: {{results.data.mixed.v}}</p>
                                 </div>
                             {% endif %}
                         </div>
                     </div>
-                </div>
                 {% endif %}
             </div>
             {% endif %}
@@ -141,17 +110,16 @@
             document.querySelectorAll('.flex > button').forEach(b => b.classList.remove('tab-active'));
             document.getElementById('b-' + mode).classList.add('tab-active');
             
-            // Ukrywanie starych wyników
-            const nBox = document.getElementById('natureResults');
-            const gBox = document.getElementById('gameResults');
-            if(nBox) nBox.style.display = 'none';
-            if(gBox) gBox.style.display = 'none';
+            // Ukrywanie wyników z poprzedniego trybu przy zmianie zakładki
+            const resView = document.getElementById('resultsView');
+            if(resView) resView.style.display = 'none';
             
-            updateLabels();
+            updateNames();
         }
         setMode('{{mode}}' || 'nature');
 
-        function updateLabels() {
+        function updateNames() {
+            const m = document.getElementById('m').value;
             const rows = document.querySelectorAll('#tb tr');
             rows.forEach((r, i) => {
                 r.cells[0].innerText = 'A' + (i + 1);
@@ -162,17 +130,19 @@
                 heads[i].innerText = 'B' + i;
             }
         }
+
         function addRow() {
             const b = document.getElementById('tb'), c = document.getElementById('hr').cells.length - 2, r = document.createElement('tr');
-            let s = `<td class="p-4 font-black text-xs text-slate-400 text-left uppercase"></td>`;
+            let s = `<td class="p-4 font-black text-xs text-slate-400 text-left"></td>`;
             for (let i = 0; i < c; i++) s += `<td><input class="input-cell" value="0"></td>`;
-            s += `<td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300 hover:text-rose-500">×</button></td>`;
-            r.innerHTML = s; b.appendChild(r); updateLabels();
+            s += `<td class="text-right"><button type="button" onclick="removeRow(this)" class="text-slate-300 hover:text-rose-500 text-xl">×</button></td>`;
+            r.innerHTML = s; b.appendChild(r); updateNames();
         }
+
         function addColumn() {
             const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
             const nI = hr.cells.length - 1;
-            const thD = document.createElement('th'); thD.className = "p-2"; thD.innerHTML = `<button type="button" onclick="removeCol(${nI})" class="text-rose-500 font-bold uppercase text-[9px]">usuń</button>`;
+            const thD = document.createElement('th'); thD.className = "p-2"; thD.innerHTML = `<button type="button" onclick="removeCol(${nI})" class="text-rose-500 hover:font-black">usuń</button>`;
             dr.insertBefore(thD, dr.lastElementChild);
             const thH = document.createElement('th'); thH.className = "p-2";
             hr.insertBefore(thH, hr.lastElementChild);
@@ -180,15 +150,17 @@
                 const td = document.createElement('td'); td.innerHTML = `<input class="input-cell" value="0">`;
                 r.insertBefore(td, r.lastElementChild);
             });
-            updateLabels();
+            updateNames();
         }
-        function removeRow(btn) { if (document.querySelectorAll('#tb tr').length > 1) { btn.closest('tr').remove(); updateLabels(); } }
+
+        function removeRow(btn) { if (document.querySelectorAll('#tb tr').length > 1) { btn.closest('tr').remove(); updateNames(); } }
+        
         function removeCol(i) {
             const dr = document.getElementById('dr'), hr = document.getElementById('hr'), rows = document.querySelectorAll('#tb tr');
             if (hr.cells.length > 3) {
                 dr.deleteCell(i); hr.deleteCell(i); rows.forEach(r => r.deleteCell(i));
                 dr.querySelectorAll('button').forEach((b, idx) => b.setAttribute('onclick', `removeCol(${idx + 1})`));
-                updateLabels();
+                updateNames();
             }
         }
     </script>
