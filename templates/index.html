@@ -2,160 +2,162 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalkulator Decyzji BO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .input-cell { width: 80px; text-align: center; border: 1px solid #cbd5e1; padding: 6px; border-radius: 6px; font-weight: bold; }
-        .input-cell:focus { outline: 2px solid #3b82f6; border-color: transparent; }
-        .btn-base { transition: all 0.2s; cursor: pointer; text-transform: uppercase; font-weight: 800; font-size: 0.75rem; }
+        .input-cell { width: 85px; text-align: center; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; transition: all 0.2s; }
+        .input-cell:focus { outline: 2px solid #3b82f6; border-color: transparent; background-color: #f8fafc; }
+        .btn-action { transition: all 0.2s; }
+        .btn-action:hover { transform: translateY(-1px); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8 text-slate-800">
-    <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans">
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8">
         
-        <div class="flex justify-between items-start mb-10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-black tracking-tighter text-slate-900 uppercase">Kalkulator Decyzji</h1>
-                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">Metody: Wald, Hurwicz, Bayes, Savage</p>
+                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Kalkulator Decyzji</h1>
+                <p class="text-slate-500 font-medium">Modelowanie macierzy wypłat (Decyzje A<sub>i</sub>, Stany B<sub>j</sub>)</p>
             </div>
             <div class="flex gap-2">
-                <button type="button" onclick="addRow()" class="btn-base bg-emerald-500 text-white px-4 py-2 rounded-xl shadow-lg shadow-emerald-100">+ Wiersz (A)</button>
-                <button type="button" onclick="addColumn()" class="btn-base bg-emerald-500 text-white px-4 py-2 rounded-xl shadow-lg shadow-emerald-100">+ Kolumna (B)</button>
+                <button onclick="addRow()" type="button" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 flex items-center gap-2">
+                    <span class="text-lg">+</span> Wiersz (A)
+                </button>
+                <button onclick="addColumn()" type="button" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 flex items-center gap-2">
+                    <span class="text-lg">+</span> Kolumna (B)
+                </button>
             </div>
         </div>
 
-        <form method="POST">
-            <div class="overflow-x-auto mb-8 rounded-2xl border border-slate-50 shadow-inner p-2">
-                <table id="matrixTable" class="w-full border-separate border-spacing-3">
-                    <thead>
+        <form method="POST" id="matrixForm">
+            <div class="overflow-x-auto mb-8 border border-slate-100 rounded-2xl shadow-sm">
+                <table id="matrixTable" class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50">
                         <tr id="deleteHeaderRow">
-                            <th></th>
-                            {% if results and results.matrix %}
-                                {% for _ in results.matrix[0] %}
-                                <th class="text-center"><button type="button" onclick="removeColumn({{ loop.index }})" class="text-rose-400 hover:text-rose-600 font-black text-[9px] uppercase">Usuń</button></th>
-                                {% endfor %}
-                            {% else %}
-                                <th class="text-center"><button type="button" onclick="removeColumn(1)" class="text-rose-400 font-black text-[9px] uppercase">Usuń</button></th>
-                                <th class="text-center"><button type="button" onclick="removeColumn(2)" class="text-rose-400 font-black text-[9px] uppercase">Usuń</button></th>
-                            {% endif %}
-                            <th></th>
+                            <th class="p-2"></th>
+                            <th class="p-2 text-center"><button type="button" onclick="removeColumn(1)" class="text-rose-500 hover:text-rose-700 text-[10px] font-black uppercase tracking-wider">Usuń</button></th>
+                            <th class="p-2 text-center"><button type="button" onclick="removeColumn(2)" class="text-rose-500 hover:text-rose-700 text-[10px] font-black uppercase tracking-wider">Usuń</button></th>
+                            <th class="p-2"></th>
                         </tr>
-                        <tr id="headerRow" class="text-slate-300 font-black text-[11px] uppercase tracking-widest">
-                            <th class="p-2">Wariant</th>
-                            {% if results and results.matrix %}
-                                {% for _ in results.matrix[0] %} <th class="p-2 text-center">B{{ loop.index }}</th> {% endfor %}
-                            {% else %}
-                                <th class="p-2 text-center">B1</th>
-                                <th class="p-2 text-center">B2</th>
-                            {% endif %}
-                            <th class="w-8"></th>
+                        <tr id="headerRow">
+                            <th class="p-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Decyzje</th>
+                            <th class="p-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">B1</th>
+                            <th class="p-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">B2</th>
+                            <th class="p-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 w-10"></th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                        {% if results and results.matrix %}
-                            {% for row in results.matrix %}
-                            <tr>
-                                <td class="font-black text-slate-400 text-center text-sm italic">A{{ loop.index }}</td>
-                                {% for cell in row %}
-                                <td class="text-center"><input type="text" name="cell_{{ loop.parent.index0 }}_{{ loop.index0 }}" class="input-cell" value="{{ cell }}"></td>
-                                {% endfor %}
-                                <td class="text-center"><button type="button" onclick="removeRow(this)" class="text-rose-200 hover:text-rose-500 font-bold text-xl transition-colors">×</button></td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td class="font-black text-slate-400 text-center text-sm italic">A1</td>
-                                <td class="text-center"><input type="text" name="cell_0_0" class="input-cell" value="0"></td>
-                                <td class="text-center"><input type="text" name="cell_0_1" class="input-cell" value="0"></td>
-                                <td class="text-center"><button type="button" onclick="removeRow(this)" class="text-rose-200 hover:text-rose-500 font-bold text-xl">×</button></td>
-                            </tr>
-                            <tr>
-                                <td class="font-black text-slate-400 text-center text-sm italic">A2</td>
-                                <td class="text-center"><input type="text" name="cell_1_0" class="input-cell" value="0"></td>
-                                <td class="text-center"><input type="text" name="cell_1_1" class="input-cell" value="0"></td>
-                                <td class="text-center"><button type="button" onclick="removeRow(this)" class="text-rose-200 hover:text-rose-500 font-bold text-xl">×</button></td>
-                            </tr>
-                        {% endif %}
+                    <tbody id="tableBody" class="divide-y divide-slate-50">
+                        <tr>
+                            <td class="p-4 font-bold text-slate-700 bg-slate-50/50 text-center">A1</td>
+                            <td class="p-2 text-center"><input type="text" name="cell_0_0" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><input type="text" name="cell_0_1" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-300 hover:text-rose-600 font-bold transition-colors">×</button></td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-slate-700 bg-slate-50/50 text-center">A2</td>
+                            <td class="p-2 text-center"><input type="text" name="cell_1_0" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><input type="text" name="cell_1_1" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-300 hover:text-rose-600 font-bold transition-colors">×</button></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="bg-slate-50 p-6 rounded-2xl flex flex-col md:flex-row gap-6 items-center border border-slate-100">
-                <div class="flex items-center gap-4">
-                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Gamma (Hurwicz):</label>
-                    <input type="number" step="0.1" name="gamma" value="{{ results.gamma if results else 0.6 }}" min="0" max="1" class="w-24 p-3 border rounded-xl font-black text-blue-600 shadow-sm outline-none">
+            <div class="flex flex-col md:flex-row gap-6 items-center bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <div class="w-full md:w-48">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 text-center tracking-widest">Współczynnik γ</label>
+                    <input type="number" step="0.1" name="gamma" value="0.6" min="0" max="1" class="w-full p-3 border rounded-xl text-center font-bold text-blue-600 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-sm btn-base shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-[0.98]">Oblicz Macierz Decyzyjną</button>
+                <button type="submit" class="w-full flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-xl shadow-lg shadow-blue-100 transition-all active:scale-[0.98] uppercase tracking-widest text-sm">
+                    Oblicz wyniki macierzy
+                </button>
             </div>
         </form>
 
-        {% if results and not results.error %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
-            {% for title, data, color in [
-                ('Wald', results.wald, 'blue'), 
-                ('Hurwicz', results.hurwicz, 'emerald'), 
-                ('Bayes', results.bayes, 'purple'), 
-                ('Savage', results.savage, 'rose')
-            ] %}
-            <div class="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm relative overflow-hidden group">
-                <div class="absolute top-0 left-0 w-1 h-full bg-{{ color }}-500"></div>
-                <p class="text-[9px] font-black uppercase text-slate-400 mb-2 tracking-widest">{{ title }}</p>
-                <p class="text-3xl font-black text-slate-800">A{{ data.idx }}</p>
-                <p class="text-[11px] text-slate-400 font-bold mt-2 uppercase">Wynik: <span class="text-slate-900">{{ data.val }}</span></p>
+        {% if results %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+            <div class="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <p class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-2">Wald (Maximin)</p>
+                <p class="text-3xl font-black text-slate-800">A{{ results.wald.idx }}</p>
+                <p class="text-sm text-slate-400 mt-1 font-medium italic">Wynik: {{ results.wald.val }}</p>
             </div>
-            {% endfor %}
-        </div>
-        {% elif results and results.error %}
-        <div class="mt-8 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-xs font-bold uppercase tracking-wide">
-            Błąd: {{ results.error }}
+            <div class="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <p class="text-emerald-500 font-black text-[10px] uppercase tracking-widest mb-2">Hurwicz</p>
+                <p class="text-3xl font-black text-slate-800">A{{ results.hurwicz.idx }}</p>
+                <p class="text-sm text-slate-400 mt-1 font-medium italic">Wynik: {{ results.hurwicz.val }}</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <p class="text-purple-500 font-black text-[10px] uppercase tracking-widest mb-2">Bayes (Laplace)</p>
+                <p class="text-3xl font-black text-slate-800">A{{ results.bayes.idx }}</p>
+                <p class="text-sm text-slate-400 mt-1 font-medium italic">Średnia: {{ results.bayes.val }}</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <p class="text-rose-500 font-black text-[10px] uppercase tracking-widest mb-2">Savage (Regret)</p>
+                <p class="text-3xl font-black text-slate-800">A{{ results.savage.idx }}</p>
+                <p class="text-sm text-slate-400 mt-1 font-medium italic">Strata: {{ results.savage.val }}</p>
+            </div>
         </div>
         {% endif %}
     </div>
 
     <script>
         function updateNames() {
+            // Aktualizacja nazw wierszy: A1, A2...
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach((row, i) => {
                 row.cells[0].innerText = 'A' + (i + 1);
-                row.querySelectorAll('input').forEach((input, j) => {
+                // Aktualizacja atrybutów name dla backendu Flask
+                const inputs = row.querySelectorAll('input');
+                inputs.forEach((input, j) => {
                     input.name = `cell_${i}_${j}`;
                 });
             });
-            const hCells = document.querySelectorAll('#headerRow th');
-            for(let i = 1; i < hCells.length - 1; i++) {
-                hCells[i].innerText = 'B' + i;
+
+            // Aktualizacja nazw nagłówków kolumn: B1, B2...
+            const headerCells = document.querySelectorAll('#headerRow th');
+            for(let i = 1; i < headerCells.length - 1; i++) {
+                headerCells[i].innerText = 'B' + i;
             }
         }
 
         function addRow() {
+            const body = document.getElementById('tableBody');
             const colCount = document.getElementById('headerRow').cells.length - 2;
-            const tr = document.createElement('tr');
-            let html = `<td class="font-black text-slate-400 text-center text-sm italic"></td>`;
-            for(let i=0; i<colCount; i++) {
-                html += `<td class="text-center"><input type="text" class="input-cell" value="0"></td>`;
+            const row = document.createElement('tr');
+            
+            let cells = `<td class="p-4 font-bold text-slate-700 bg-slate-50/50 text-center"></td>`;
+            for (let i = 0; i < colCount; i++) {
+                cells += `<td class="p-2 text-center"><input type="text" class="input-cell" value="0"></td>`;
             }
-            html += `<td class="text-center"><button type="button" onclick="removeRow(this)" class="text-rose-200 hover:text-rose-500 font-bold text-xl">×</button></td>`;
-            tr.innerHTML = html;
-            document.getElementById('tableBody').appendChild(tr);
+            cells += `<td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-300 hover:text-rose-600 font-bold transition-colors">×</button></td>`;
+            
+            row.innerHTML = cells;
+            body.appendChild(row);
             updateNames();
         }
 
         function addColumn() {
-            const idx = document.getElementById('headerRow').cells.length - 1;
             const delHeader = document.getElementById('deleteHeaderRow');
-            const thDel = document.createElement('th');
-            thDel.className = "text-center";
-            thDel.innerHTML = `<button type="button" onclick="removeColumn(${idx})" class="text-rose-400 font-black text-[9px] uppercase">Usuń</button>`;
-            delHeader.insertBefore(thDel, delHeader.lastElementChild);
-            
             const header = document.getElementById('headerRow');
+            const rows = document.querySelectorAll('#tableBody tr');
+            const newColIdx = header.cells.length - 1;
+
+            // Przycisk usuwania w "deleteHeaderRow"
+            const thDel = document.createElement('th');
+            thDel.className = "p-2 text-center";
+            thDel.innerHTML = `<button type="button" onclick="removeColumn(${newColIdx})" class="text-rose-500 hover:text-rose-700 text-[10px] font-black uppercase tracking-wider">Usuń</button>`;
+            delHeader.insertBefore(thDel, delHeader.lastElementChild);
+
+            // Nazwa kolumny Bi
             const th = document.createElement('th');
-            th.className = "p-2 text-center";
+            th.className = "p-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center";
             header.insertBefore(th, header.lastElementChild);
-            
-            document.querySelectorAll('#tableBody tr').forEach(row => {
+
+            // Komórki danych
+            rows.forEach(row => {
                 const td = document.createElement('td');
-                td.className = "text-center";
+                td.className = "p-2 text-center";
                 td.innerHTML = `<input type="text" class="input-cell" value="0">`;
                 row.insertBefore(td, row.lastElementChild);
             });
@@ -163,24 +165,31 @@
         }
 
         function removeRow(btn) {
-            if(document.querySelectorAll('#tableBody tr').length > 1) {
-                btn.closest('tr').remove();
+            const rows = document.querySelectorAll('#tableBody tr');
+            if (rows.length > 1) {
+                btn.parentElement.parentElement.remove();
                 updateNames();
             }
         }
 
-        function removeColumn(idx) {
-            if(document.getElementById('headerRow').cells.length > 3) {
-                document.getElementById('deleteHeaderRow').deleteCell(idx);
-                document.getElementById('headerRow').deleteCell(idx);
-                document.querySelectorAll('#tableBody tr').forEach(row => row.deleteCell(idx));
-                document.querySelectorAll('#deleteHeaderRow button').forEach((btn, i) => {
-                    btn.setAttribute('onclick', `removeColumn(${i+1})`);
+        function removeColumn(index) {
+            const delHeader = document.getElementById('deleteHeaderRow');
+            const header = document.getElementById('headerRow');
+            const rows = document.querySelectorAll('#tableBody tr');
+
+            if (header.cells.length > 3) {
+                delHeader.deleteCell(index);
+                header.deleteCell(index);
+                rows.forEach(row => row.deleteCell(index));
+                
+                // Odświeżenie indeksów w przyciskach "USUŃ"
+                const delButtons = delHeader.querySelectorAll('button');
+                delButtons.forEach((btn, i) => {
+                    btn.setAttribute('onclick', `removeColumn(${i + 1})`);
                 });
                 updateNames();
             }
         }
-        window.onload = updateNames;
     </script>
 </body>
 </html>
