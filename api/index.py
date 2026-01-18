@@ -5,6 +5,7 @@ import re
 app = Flask(__name__, template_folder='../templates')
 
 def solve_games(matrix):
+    """Logika dla Gier Strategicznych (Gracz A vs Gracz B)"""
     r_min = np.min(matrix, axis=1)
     c_max = np.max(matrix, axis=0)
     maximin = float(np.max(r_min))
@@ -18,11 +19,11 @@ def solve_games(matrix):
         "mixed": None
     }
     
-    # Sprawdzenie punktu siodłowego (Strategia Czysta)
+    # Sprawdzenie punktu siodłowego
     if maximin == minimax:
         r_idx, c_idx = int(np.argmax(r_min)), int(np.argmin(c_max))
         res["saddle"] = {"v": maximin, "r": r_idx + 1, "c": c_idx + 1}
-    # Strategie mieszane (tylko dla macierzy 2x2)
+    # Strategie mieszane (dla macierzy 2x2 bez punktu siodłowego)
     elif matrix.shape == (2, 2):
         a11, a12 = matrix[0,0], matrix[0,1]
         a21, a22 = matrix[1,0], matrix[1,1]
@@ -43,7 +44,7 @@ def index():
     results, mode = None, request.form.get('mode', 'nature')
     if request.method == 'POST':
         try:
-            # Pobieranie danych z macierzy
+            # Parsowanie komórek macierzy z formularza
             cells = {tuple(map(int, re.match(r'cell_(\d+)_(\d+)', k).groups())): float(v.replace(',', '.')) 
                      for k, v in request.form.items() if re.match(r'cell_(\d+)_(\d+)', k)}
             
@@ -58,7 +59,7 @@ def index():
             if mode == 'nature':
                 g = float(request.form.get('gamma', 0.6).replace(',', '.'))
                 mi = np.min(mat, axis=1)
-                # Kryteria: Wald, Hurwicz, Bayes, Savage
+                # Kryteria: Wald (maximin), Hurwicz, Bayes (Laplace), Savage (minimax strat)
                 results = {
                     "type": "nature", 
                     "wald": int(np.argmax(mi)+1), 
