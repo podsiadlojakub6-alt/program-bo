@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request
 import numpy as np
 import re
+import os
 
-app = Flask(__name__)
+# KLUCZOWA ZMIANA: Wskazujemy ścieżkę do templates relatywnie do tego pliku
+app = Flask(__name__, template_folder='../templates')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -31,33 +33,24 @@ def index():
             if max_row == -1:
                 return render_template('index.html', results=None)
 
-            # Budowa macierzy o wymiarach (A x B)
             matrix = np.zeros((max_row + 1, max_col + 1))
             for (r, c), val in data_dict.items():
                 matrix[r, c] = val
             
-            # Algorytmy decyzyjne
             min_rows = np.min(matrix, axis=1)
             max_rows = np.max(matrix, axis=1)
             
-            # 1. Wald (Maximin)
             wald_idx = int(np.argmax(min_rows))
-            
-            # 2. Hurwicz
             hurwicz_vals = gamma * min_rows + (1 - gamma) * max_rows
             hurwicz_idx = int(np.argmax(hurwicz_vals))
-            
-            # 3. Bayes (Laplace)
             bayes_vals = np.mean(matrix, axis=1)
             bayes_idx = int(np.argmax(bayes_vals))
             
-            # 4. Savage (Regret)
             col_max = np.max(matrix, axis=0)
             regret_matrix = col_max - matrix
             max_regrets = np.max(regret_matrix, axis=1)
             savage_idx = int(np.argmin(max_regrets))
             
-            # Przygotowanie wyników do wyświetlenia
             results = {
                 "wald": {"val": round(float(min_rows[wald_idx]), 2), "idx": wald_idx + 1},
                 "hurwicz": {"val": round(float(hurwicz_vals[hurwicz_idx]), 2), "idx": hurwicz_idx + 1},
@@ -71,5 +64,5 @@ def index():
 
     return render_template('index.html', results=results)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Wymagane dla Vercel
+app.debug = False
