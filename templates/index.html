@@ -2,119 +2,184 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Kalkulator BO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Decyzji BO</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .input-cell { width: 85px; text-align: center; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; }
+        .input-cell:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+        .btn-action { transition: all 0.2s; }
+        .btn-action:hover { transform: translateY(-1px); }
+    </style>
 </head>
-<body class="bg-slate-100 p-4 md:p-8 font-sans">
-    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8">
-        
-        <div class="flex border-b mb-8">
-            <button onclick="switchTab('natura')" id="btn-natura" class="py-2 px-6 font-black uppercase text-sm border-b-4 transition-all">Gry z Naturą</button>
-            <button onclick="switchTab('strategiczne')" id="btn-strategiczne" class="py-2 px-6 font-black uppercase text-sm border-b-4 transition-all">Gry Strategiczne</button>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Kalkulator Decyzji</h1>
+                <p class="text-slate-500">Zarządzaj macierzą 2x2 (lub większą) i obliczaj wyniki.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="addRow()" type="button" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">+ Wiersz</button>
+                <button onclick="addColumn()" type="button" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">+ Kolumna</button>
+            </div>
         </div>
 
-        <form method="POST" id="mainForm">
-            <input type="hidden" name="tab" id="tabInput" value="{{ active_tab }}">
-            
-            <div class="flex justify-between mb-4">
-                <h2 id="tabTitle" class="text-xl font-black uppercase italic text-slate-700">Gry z Naturą</h2>
-                <div class="flex gap-2">
-                    <button type="button" onclick="addRow()" class="bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-bold">+ Wiersz</button>
-                    <button type="button" onclick="addColumn()" class="bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-bold">+ Kolumna</button>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto mb-6">
-                <table class="w-full border-separate border-spacing-2">
-                    <tbody id="tableBody">
-                        {% if results and results.matrix %}
-                            {% for row in results.matrix %}
-                            <tr>
-                                <td class="font-bold text-slate-400">{% if active_tab == 'natura' %}A{{loop.index}}{% else %}G1-{{loop.index}}{% endif %}</td>
-                                {% for cell in row %}
-                                <td><input type="text" name="cell_{{loop.parent.index0}}_{{loop.index0}}" class="w-20 p-2 border rounded text-center font-bold" value="{{cell}}"></td>
-                                {% endfor %}
-                                <td><button type="button" onclick="this.closest('tr').remove()" class="text-rose-400">×</button></td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td class="font-bold text-slate-400">A1</td>
-                                <td><input type="text" name="cell_0_0" class="w-20 p-2 border rounded text-center font-bold" value="0"></td>
-                                <td><input type="text" name="cell_0_1" class="w-20 p-2 border rounded text-center font-bold" value="0"></td>
-                                <td><button type="button" onclick="this.closest('tr').remove()" class="text-rose-400">×</button></td>
-                            </tr>
-                        {% endif %}
+        <form method="POST" id="matrixForm">
+            <div class="overflow-x-auto mb-8 border border-slate-100 rounded-xl">
+                <table id="matrixTable" class="w-full text-left">
+                    <thead class="bg-slate-50">
+                        <tr id="deleteHeaderRow">
+                            <th class="p-2"></th> <th class="p-2 text-center"><button type="button" onclick="removeColumn(1)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">USUŃ</button></th>
+                            <th class="p-2 text-center"><button type="button" onclick="removeColumn(2)" class="text-rose-500 hover:text-rose-700 text-xs font-bold">USUŃ</button></th>
+                            <th class="p-2"></th> </tr>
+                        <tr id="headerRow">
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase">Wariant</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase">Stan 1</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase">Stan 2</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        <tr>
+                            <td class="p-4 font-bold text-slate-700">W1</td>
+                            <td class="p-2"><input type="text" name="cell_0_0" class="input-cell" value="0"></td>
+                            <td class="p-2"><input type="text" name="cell_0_1" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold">×</button></td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-slate-700">W2</td>
+                            <td class="p-2"><input type="text" name="cell_1_0" class="input-cell" value="0"></td>
+                            <td class="p-2"><input type="text" name="cell_1_1" class="input-cell" value="0"></td>
+                            <td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold">×</button></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div id="gammaContainer" class="mb-6 {% if active_tab == 'strategiczne' %}hidden{% endif %}">
-                <label class="text-xs font-black uppercase text-slate-400">Gamma (Hurwicz):</label>
-                <input type="number" step="0.1" name="gamma" value="0.6" class="p-2 border rounded w-20 font-bold">
+            <div class="flex flex-wrap gap-6 items-end bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <div class="w-40">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 text-center">Gamma (Hurwicz)</label>
+                    <input type="number" step="0.1" name="gamma" value="0.6" min="0" max="1" class="w-full p-3 border rounded-xl text-center font-bold text-blue-600 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 uppercase tracking-wider">
+                    Oblicz wyniki
+                </button>
             </div>
-
-            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg">Oblicz</button>
         </form>
 
         {% if results %}
-            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% if results.type == 'natura' %}
-                    <div class="p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500"><p class="text-xs font-bold">WALD: A{{results.wald.idx}} ({{results.wald.val}})</p></div>
-                    <div class="p-4 bg-emerald-50 rounded-xl border-l-4 border-emerald-500"><p class="text-xs font-bold">HURWICZ: A{{results.hurwicz.idx}} ({{results.hurwicz.val}})</p></div>
-                    <div class="p-4 bg-purple-50 rounded-xl border-l-4 border-purple-500"><p class="text-xs font-bold">BAYES: A{{results.bayes.idx}} ({{results.bayes.val}})</p></div>
-                    <div class="p-4 bg-rose-50 rounded-xl border-l-4 border-rose-500"><p class="text-xs font-bold">SAVAGE: A{{results.savage.idx}} ({{results.savage.val}})</p></div>
-                {% elif results.type == 'strategiczne' %}
-                    <div class="p-4 bg-slate-50 rounded-xl"><p class="text-xs font-bold">WARTOŚĆ DOLNA: {{results.lower}}</p></div>
-                    <div class="p-4 bg-slate-50 rounded-xl"><p class="text-xs font-bold">WARTOŚĆ GÓRNA: {{results.upper}}</p></div>
-                    <div class="col-span-2 p-4 {% if results.saddle %}bg-emerald-100{% else %}bg-amber-100{% endif %} rounded-xl text-center font-black">
-                        {% if results.saddle %} PUNKT SIODŁOWY: {{results.saddle}} {% else %} BRAK PUNKTU SIODŁOWEGO (GRA MIESZANA) {% endif %}
-                    </div>
-                {% endif %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+            <div class="p-5 rounded-2xl bg-white border-2 border-blue-100 shadow-sm">
+                <p class="text-blue-500 font-bold text-xs uppercase mb-1">Wald (Maximin)</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.wald.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Wynik: {{ results.wald.val }}</p>
             </div>
+            <div class="p-5 rounded-2xl bg-white border-2 border-emerald-100 shadow-sm">
+                <p class="text-emerald-500 font-bold text-xs uppercase mb-1">Hurwicz</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.hurwicz.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Wynik: {{ results.hurwicz.val }}</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border-2 border-purple-100 shadow-sm">
+                <p class="text-purple-500 font-bold text-xs uppercase mb-1">Bayes (A)</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.bayes.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Średnia: {{ results.bayes.val }}</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border-2 border-rose-100 shadow-sm">
+                <p class="text-rose-500 font-bold text-xs uppercase mb-1">Savage</p>
+                <p class="text-2xl font-black text-slate-800">Wariant {{ results.savage.idx }}</p>
+                <p class="text-sm text-slate-400 font-medium">Strata: {{ results.savage.val }}</p>
+            </div>
+        </div>
         {% endif %}
     </div>
 
     <script>
-        function switchTab(tab) {
-            document.getElementById('tabInput').value = tab;
-            document.getElementById('tabTitle').innerText = tab === 'natura' ? 'Gry z Naturą' : 'Gry Strategiczne';
-            document.getElementById('gammaContainer').classList.toggle('hidden', tab === 'strategiczne');
-            
-            document.getElementById('btn-natura').className = tab === 'natura' ? 'py-2 px-6 font-black uppercase text-sm border-b-4 border-blue-600 text-blue-600' : 'py-2 px-6 font-black uppercase text-sm border-b-4 border-transparent text-slate-400';
-            document.getElementById('btn-strategiczne').className = tab === 'strategiczne' ? 'py-2 px-6 font-black uppercase text-sm border-b-4 border-blue-600 text-blue-600' : 'py-2 px-6 font-black uppercase text-sm border-b-4 border-transparent text-slate-400';
+        function updateNames() {
+            // Aktualizacja nazw wierszy W1, W2...
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach((row, i) => {
+                row.cells[0].innerText = 'W' + (i + 1);
+                // Aktualizacja atrybutów name dla inputów
+                const inputs = row.querySelectorAll('input');
+                inputs.forEach((input, j) => {
+                    input.name = `cell_${i}_${j}`;
+                });
+            });
+            // Aktualizacja nazw kolumn Stan 1, Stan 2...
+            const headerCells = document.querySelectorAll('#headerRow th');
+            for(let i = 1; i < headerCells.length - 1; i++) {
+                headerCells[i].innerText = 'Stan ' + i;
+            }
         }
-        
+
         function addRow() {
             const body = document.getElementById('tableBody');
-            const cols = body.rows[0].cells.length - 2;
-            const newRow = body.insertRow();
-            const label = activeTab() === 'natura' ? 'A' + body.rows.length : 'G1-' + body.rows.length;
-            newRow.innerHTML = `<td class="font-bold text-slate-400">${label}</td>` + 
-                '<td><input type="text" class="w-20 p-2 border rounded text-center font-bold" value="0"></td>'.repeat(cols) + 
-                '<td><button type="button" onclick="this.closest(\'tr\').remove()" class="text-rose-400">×</button></td>';
-            updateInputs();
+            const colCount = document.getElementById('headerRow').cells.length - 2;
+            const row = document.createElement('tr');
+            let cells = `<td class="p-4 font-bold text-slate-700"></td>`;
+            for (let i = 0; i < colCount; i++) {
+                cells += `<td class="p-2"><input type="text" class="input-cell" value="0"></td>`;
+            }
+            cells += `<td class="p-2 text-center"><button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold">×</button></td>`;
+            row.innerHTML = cells;
+            body.appendChild(row);
+            updateNames();
         }
 
         function addColumn() {
-            const body = document.getElementById('tableBody');
-            for(let i=0; i<body.rows.length; i++) {
-                const cell = body.rows[i].insertCell(body.rows[i].cells.length - 1);
-                cell.innerHTML = '<input type="text" class="w-20 p-2 border rounded text-center font-bold" value="0">';
-            }
-            updateInputs();
+            const delHeader = document.getElementById('deleteHeaderRow');
+            const header = document.getElementById('headerRow');
+            const rows = document.querySelectorAll('#tableBody tr');
+            const newColIdx = header.cells.length - 1;
+
+            // Przycisk usuwania kolumny
+            const thDel = document.createElement('th');
+            thDel.className = "p-2 text-center";
+            thDel.innerHTML = `<button type="button" onclick="removeColumn(${newColIdx})" class="text-rose-500 hover:text-rose-700 text-xs font-bold">USUŃ</button>`;
+            delHeader.insertBefore(thDel, delHeader.lastElementChild);
+
+            // Nagłówek "Stan X"
+            const th = document.createElement('th');
+            th.className = "p-4 text-xs font-bold text-slate-400 uppercase";
+            header.insertBefore(th, header.lastElementChild);
+
+            // Komórki w wierszach
+            rows.forEach(row => {
+                const td = document.createElement('td');
+                td.className = "p-2";
+                td.innerHTML = `<input type="text" class="input-cell" value="0">`;
+                row.insertBefore(td, row.lastElementChild);
+            });
+            updateNames();
         }
 
-        function updateInputs() {
-            const rows = document.getElementById('tableBody').rows;
-            for(let i=0; i<rows.length; i++) {
-                const inputs = rows[i].querySelectorAll('input');
-                inputs.forEach((inp, j) => { inp.name = `cell_${i}_${j}`; });
+        function removeRow(btn) {
+            const rows = document.querySelectorAll('#tableBody tr');
+            if (rows.length > 1) {
+                btn.parentElement.parentElement.remove();
+                updateNames();
             }
         }
 
-        function activeTab() { return document.getElementById('tabInput').value; }
-        window.onload = () => switchTab('{{ active_tab }}');
+        function removeColumn(index) {
+            const delHeader = document.getElementById('deleteHeaderRow');
+            const header = document.getElementById('headerRow');
+            const rows = document.querySelectorAll('#tableBody tr');
+
+            if (header.cells.length > 3) { // Blokada usuwania jeśli zostaje 1 kolumna
+                delHeader.deleteCell(index);
+                header.deleteCell(index);
+                rows.forEach(row => row.deleteCell(index));
+                
+                // Aktualizacja funkcji onclick dla pozostałych przycisków usuwania kolumn
+                const delButtons = delHeader.querySelectorAll('button');
+                delButtons.forEach((btn, i) => {
+                    btn.setAttribute('onclick', `removeColumn(${i + 1})`);
+                });
+                updateNames();
+            }
+        }
     </script>
 </body>
 </html>
