@@ -5,7 +5,7 @@ import re
 app = Flask(__name__, template_folder='../templates')
 
 def solve_games(matrix):
-    """Analiza gry strategicznej: Va, Vb i strategie mieszane"""
+    """Obliczenia dla gier dwuosobowych o sumie zerowej (A vs B)"""
     r_min = np.min(matrix, axis=1)
     c_max = np.max(matrix, axis=0)
     maximin = float(np.max(r_min))
@@ -41,14 +41,15 @@ def index():
     results, mode = None, request.form.get('mode', 'nature')
     if request.method == 'POST':
         try:
+            # Pobieranie danych z macierzy niezależnie od wymiarów
             cells = {tuple(map(int, re.match(r'cell_(\d+)_(\d+)', k).groups())): float(v.replace(',', '.')) 
                      for k, v in request.form.items() if re.match(r'cell_(\d+)_(\d+)', k)}
             
             if not cells: 
                 return render_template('index.html', results=None, mode=mode)
                 
-            r_m, c_m = max(k[0] for k in cells.keys()), max(k[1] for k in cells.keys())
-            mat = np.zeros((r_m + 1, c_m + 1))
+            r_max, c_max = max(k[0] for k in cells.keys()), max(k[1] for k in cells.keys())
+            mat = np.zeros((r_max + 1, c_max + 1))
             for (r, c), v in cells.items(): 
                 mat[r, c] = v
             
@@ -66,6 +67,6 @@ def index():
                 results = {"type": "game", "data": solve_games(mat)}
                 
         except Exception as e: 
-            results = {"error": str(e)}
+            results = {"error": "Wprowadź poprawne dane liczbowe."}
             
     return render_template('index.html', results=results, mode=mode)
