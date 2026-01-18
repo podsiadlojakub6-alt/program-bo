@@ -5,7 +5,7 @@ import re
 app = Flask(__name__, template_folder='../templates')
 
 def solve_games(matrix):
-    """Logika dla Gier Strategicznych"""
+    """Analiza gry strategicznej: Va, Vb i strategie mieszane"""
     r_min = np.min(matrix, axis=1)
     c_max = np.max(matrix, axis=0)
     maximin = float(np.max(r_min))
